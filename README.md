@@ -1,12 +1,12 @@
 # robo-trainer-mcp
 
-An MCP server that turns Claude into a full-stack personal trainer — nutrition coaching, strength programming, powerlifting analytics, strongman event tracking, recovery monitoring, and mental performance analysis, all from a single privacy-first local server.
+An MCP server that turns Claude into a full-stack personal trainer: nutrition coaching, strength programming, powerlifting analytics, strongman event tracking, recovery monitoring, and mental performance analysis, all from a single privacy-first local server.
 
 ## The Problem It Solves
 
 Every fitness app works in isolation. Your food tracker knows your macros. Your training log knows your lifts. Your sleep tracker knows your HRV. None of them talk to each other, and none of them can tell you *why* you're stuck.
 
-robo-trainer-mcp connects everything. Claude can pull training volume, sleep trends, nutrition, and mood all at once — then reason across them like a real coach.
+robo-trainer-mcp connects everything. Claude can pull training volume, sleep trends, nutrition, and mood all at once: then reason across them like a real coach.
 
 ## Demo
 
