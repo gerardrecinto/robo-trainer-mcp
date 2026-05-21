@@ -1,0 +1,7 @@
+services:
+  robo-trainer:
+    build: .
+    volumes:
+      - ~/.robo-trainer:/root/.robo-trainer
+    environment:
+      - PYTHONUNBUFFERED=1
