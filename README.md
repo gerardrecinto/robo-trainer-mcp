@@ -1,6 +1,6 @@
-![demo](docs/assets/demo.gif)
-
 # robo-trainer-mcp
+
+![Robo Trainer MCP logo](docs/assets/logo.svg)
 
 MCP server that turns Claude into a full-stack personal trainer. Nutrition coaching, strength programming, powerlifting analytics, strongman tracking, recovery monitoring, and mental performance — all from a single local server, nothing leaving your machine.
 
@@ -9,6 +9,8 @@ MCP server that turns Claude into a full-stack personal trainer. Nutrition coach
 ![SQLite](https://img.shields.io/badge/Storage-SQLite%20local-lightgrey)
 ![Tests](https://img.shields.io/badge/Tests-11%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
+
+![demo](docs/assets/demo.gif)
 
 ---
 
@@ -192,6 +194,12 @@ pip install -e ".[dev]"
 pytest tests/ -v
 # 11 passed  coverage: 89%
 ```
+
+## Product Direction
+
+This can grow into a local-first AI coaching product: open-source MCP server as the wedge, Pro dashboards for athletes, and Coach Mode for trainers managing clients.
+
+See [docs/go-to-market.md](docs/go-to-market.md).
 
 ---
 

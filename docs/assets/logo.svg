@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="260" viewBox="0 0 960 260" role="img" aria-labelledby="title desc">
+  <title id="title">Robo Trainer MCP logo</title>
+  <desc id="desc">AI strength coaching with local training memory.</desc>
+  <rect width="960" height="260" rx="28" fill="#0b1020"/>
+  <g fill="none" stroke="#84cc16" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M88 130h78M166 88v84M216 70v120M216 130h110M326 88v84M376 130h78"/>
+    <circle cx="216" cy="130" r="22"/>
+    <path d="M470 88h62l24 42-24 42h-62l-24-42z"/>
+  </g>
+  <text x="585" y="118" fill="#f8fafc" font-family="Inter, Arial, sans-serif" font-size="48" font-weight="800">Robo Trainer MCP</text>
+  <text x="588" y="160" fill="#94a3b8" font-family="Inter, Arial, sans-serif" font-size="22">Training, nutrition, recovery, and coaching memory</text>
+</svg>
