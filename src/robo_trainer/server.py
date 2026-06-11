@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,9 @@ from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+logger = logging.getLogger(__name__)
 
 mcp = FastMCP(
     "robo-trainer",
@@ -39,12 +43,16 @@ def _audit(tool: str, params: dict[str, Any]) -> None:
 def main() -> None:
     _init_audit()
     from robo_trainer.tools import nutrition, training, powerlifting, strongman, recovery, mental_health
-    nutrition.register(mcp, _audit)
-    training.register(mcp, _audit)
-    powerlifting.register(mcp, _audit)
-    strongman.register(mcp, _audit)
-    recovery.register(mcp, _audit)
-    mental_health.register(mcp, _audit)
+    modules = [nutrition, training, powerlifting, strongman, recovery, mental_health]
+    registered: list[str] = []
+    for mod in modules:
+        name = mod.__name__.split(".")[-1]
+        try:
+            mod.register(mcp, _audit)
+            registered.append(name)
+        except Exception as exc:
+            logger.warning("tool module %s failed to load: %s", name, exc)
+    logger.info("robo-trainer started — registered: %s", ", ".join(registered))
     mcp.run()
 
 
