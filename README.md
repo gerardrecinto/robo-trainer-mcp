@@ -1,14 +1,16 @@
 # robo-trainer-mcp
 
-![Robo Trainer MCP logo](docs/assets/logo.svg)
-
-MCP server that turns Claude into a full-stack personal trainer. Nutrition coaching, strength programming, powerlifting analytics, strongman tracking, recovery monitoring, and mental performance — all from a single local server, nothing leaving your machine.
-
+![CI](https://github.com/gerardrecinto/robo-trainer-mcp/actions/workflows/ci.yml/badge.svg)
+![Release](https://github.com/gerardrecinto/robo-trainer-mcp/actions/workflows/release.yml/badge.svg)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-green)
 ![SQLite](https://img.shields.io/badge/Storage-SQLite%20local-lightgrey)
 ![Tests](https://img.shields.io/badge/Tests-11%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
+
+![Robo Trainer MCP logo](docs/assets/logo.svg)
+
+MCP server that turns Claude into a full-stack personal trainer. Nutrition coaching, strength programming, powerlifting analytics, strongman tracking, recovery monitoring, and mental performance — all from a single local server, nothing leaving your machine.
 
 ![demo](docs/assets/demo.gif)
 
@@ -89,7 +91,7 @@ You: "I slept 6 hours, quality 5/10, soreness 7/10, stress 7/10."
                  │         (FastMCP server)          │
                  └────────┬─────────────┬────────────┘
                           │             │
-             ┌────────────▼──┐  ┌───────▼──────────────┐
+             ┌────────────▼──┐  ┌─────▼─────────────────┐
              │   SQLite DB   │  │  Open Food Facts API  │
              │ ~/.robo-      │  │  (food search only)   │
              │  trainer/     │  └──────────────────────┘
@@ -164,6 +166,12 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required.
 pip install robo-trainer-mcp
 ```
 
+### Docker
+
+```bash
+docker pull ghcr.io/gerardrecinto/robo-trainer-mcp:latest
+```
+
 Add to Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
@@ -184,6 +192,12 @@ cd robo-trainer-mcp
 pip install -e .
 robo-trainer-mcp
 ```
+
+---
+
+## Resilient module loading
+
+Each tool module (nutrition, training, recovery, etc.) loads independently. If a module fails to import, the server logs the error and continues loading the rest. Version is logged at startup. This means the server comes up cleanly even if one module has a dependency issue.
 
 ---
 
