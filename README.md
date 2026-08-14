@@ -10,7 +10,7 @@
 
 ![Robo Trainer MCP logo](docs/assets/logo.svg)
 
-MCP server that turns Claude into a full-stack personal trainer. Nutrition coaching, strength programming, powerlifting analytics, strongman tracking, recovery monitoring, and mental performance — all from a single local server, nothing leaving your machine.
+MCP server that turns Claude into a full-stack personal trainer. Nutrition coaching, strength programming, powerlifting analytics, strongman tracking, recovery monitoring, and mental performance: all from a single local server, nothing leaving your machine.
 
 ![demo](docs/assets/demo.gif)
 
@@ -20,7 +20,7 @@ MCP server that turns Claude into a full-stack personal trainer. Nutrition coach
 
 Every fitness app works in isolation. Your food tracker knows your macros. Your training log knows your lifts. Your sleep tracker knows your HRV. None of them talk to each other, and none of them can tell you *why* you're stuck.
 
-robo-trainer-mcp connects everything. Claude can pull training volume, sleep trends, nutrition, and mood at once — then reason across them like a real coach.
+robo-trainer-mcp connects everything. Claude can pull training volume, sleep trends, nutrition, and mood at once: then reason across them like a real coach.
 
 ---
 
@@ -55,7 +55,7 @@ You: "I squat 200, bench 130, deadlift 240 at 93 kg bodyweight."
   Wilks 2020:  358.4  (Advanced)
   DOTS:        347.1  (Advanced)
 
-  Weakest lift: Bench — 3.2% below elite average proportion.
+  Weakest lift: Bench: 3.2% below elite average proportion.
   Recommendation: hypertrophy + technique block on bench.
 
   Attempt suggestions:
@@ -108,7 +108,7 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required.
 
 ---
 
-## Tools — 24 total
+## Tools: 24 total
 
 ### Nutrition
 | Tool | Description |
