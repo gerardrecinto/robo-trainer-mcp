@@ -61,6 +61,13 @@ CREATE TABLE IF NOT EXISTS mood_log (
     notes       TEXT
 );
 
+CREATE TABLE IF NOT EXISTS bodyweight_log (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    date        TEXT NOT NULL UNIQUE,
+    weight_kg   REAL NOT NULL,
+    created_at  TEXT DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS event_log (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     date                TEXT NOT NULL,

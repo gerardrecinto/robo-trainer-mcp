@@ -58,3 +58,33 @@ def test_volume_trend_returns_demo_when_no_data():
     assert len(result["trend"]) == 4
     for week in result["trend"]:
         assert week["volume_kg"] > 0
+
+
+def test_log_bodyweight_returns_logged():
+    training = _fresh_training()
+    mcp = _FakeMCP()
+    training.register(mcp, lambda t, p: None)
+    result = json.loads(mcp.tools["training_log_bodyweight"](weight_kg=88.5, date="2024-02-01"))
+    assert result["logged"] is True
+    assert result["date"] == "2024-02-01"
+    assert result["weight_kg"] == 88.5
+
+
+def test_bodyweight_trend_returns_demo_when_no_data():
+    training = _fresh_training()
+    mcp = _FakeMCP()
+    training.register(mcp, lambda t, p: None)
+    result = json.loads(mcp.tools["training_get_bodyweight_trend"](days=14))
+    assert len(result["days"]) == 14
+    assert "average_kg" in result
+    assert "net_change_kg" in result
+
+
+def test_check_overreaching_returns_demo_when_no_data():
+    training = _fresh_training()
+    mcp = _FakeMCP()
+    training.register(mcp, lambda t, p: None)
+    result = json.loads(mcp.tools["training_check_overreaching"](exercise="squat", weeks=4))
+    assert result["exercise"] == "squat"
+    assert result["risk"] in ("elevated", "moderate", "low", "insufficient_data")
+    assert "recommendation" in result

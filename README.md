@@ -108,7 +108,7 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required.
 
 ---
 
-## Tools: 24 total
+## Tools: 27 total
 
 ### Nutrition
 | Tool | Description |
@@ -127,6 +127,9 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required.
 | `training_calculate_1rm` | Epley estimate + full percentage chart |
 | `training_get_volume_trend` | Weekly volume trend over N weeks |
 | `training_get_session_history` | Session history for an exercise |
+| `training_log_bodyweight` | Log bodyweight in kg for a date |
+| `training_get_bodyweight_trend` | Bodyweight trend, net change, average over N days |
+| `training_check_overreaching` | Flag overreaching risk from rising volume + rising RPE |
 
 ### Powerlifting
 | Tool | Description |
@@ -202,7 +205,7 @@ Each tool module (nutrition, training, recovery, etc.) loads independently. If a
 ```bash
 pip install -e ".[dev]"
 pytest tests/ -v
-# 11 passed  coverage: 89%
+# 16 passed
 ```
 
 ## Product Direction
