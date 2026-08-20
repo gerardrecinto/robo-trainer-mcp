@@ -2,10 +2,10 @@
 
 ![CI](https://github.com/gerardrecinto/robo-trainer-mcp/actions/workflows/ci.yml/badge.svg)
 ![Release](https://github.com/gerardrecinto/robo-trainer-mcp/actions/workflows/release.yml/badge.svg)
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python&logoColor=white)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-green)
 ![SQLite](https://img.shields.io/badge/Storage-SQLite%20local-lightgrey)
-![Tests](https://img.shields.io/badge/Tests-11%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/Tests-16%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 ![Robo Trainer MCP logo](docs/assets/logo.svg)
@@ -162,8 +162,13 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required.
 
 ## Quick start
 
+Not yet published to PyPI. Install from source or use the Docker image below.
+
 ```bash
-pip install robo-trainer-mcp
+git clone https://github.com/gerardrecinto/robo-trainer-mcp
+cd robo-trainer-mcp
+pip install -e .
+robo-trainer-mcp
 ```
 
 ### Docker
@@ -182,15 +187,6 @@ Add to Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_conf
     }
   }
 }
-```
-
-Or from source:
-
-```bash
-git clone https://github.com/gerardrecinto/robo-trainer-mcp
-cd robo-trainer-mcp
-pip install -e .
-robo-trainer-mcp
 ```
 
 ---
