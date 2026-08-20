@@ -111,8 +111,8 @@ def register(mcp: Any, audit: Callable) -> None:
         with get_conn() as conn:
             rows = conn.execute(
                 "SELECT date, set_number, weight_kg, reps, rpe FROM training_log "
-                "WHERE exercise=? ORDER BY date DESC, set_number LIMIT ?",
-                (exercise, limit * 5),
+                "WHERE exercise=? ORDER BY date DESC, set_number",
+                (exercise,),
             ).fetchall()
         if not rows:
             return json.dumps(_demo_session_history(exercise), indent=2)

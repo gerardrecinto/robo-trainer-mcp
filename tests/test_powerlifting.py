@@ -43,6 +43,15 @@ def test_sbd_ratio_identifies_bench_weakness():
     assert result["weakest_lift"] == "bench"
 
 
+def test_sbd_ratio_zero_total_returns_error_not_crash():
+    """squat=bench=deadlift=0 must not raise ZeroDivisionError."""
+    pl = _pl()
+    mcp = _FakeMCP()
+    pl.register(mcp, lambda t, p: None)
+    result = json.loads(mcp.tools["pl_analyze_sbd_ratio"](squat_kg=0.0, bench_kg=0.0, deadlift_kg=0.0))
+    assert "error" in result
+
+
 def test_attempt_prediction():
     pl = _pl()
     mcp = _FakeMCP()

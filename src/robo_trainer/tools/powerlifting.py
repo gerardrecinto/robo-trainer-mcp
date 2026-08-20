@@ -84,6 +84,8 @@ def register(mcp: Any, audit: Callable) -> None:
         """Identify weakest lift vs. elite squat:bench:deadlift proportions (raw)."""
         audit("pl_analyze_sbd_ratio", {"squat_kg": squat_kg, "bench_kg": bench_kg, "deadlift_kg": deadlift_kg})
         total = squat_kg + bench_kg + deadlift_kg
+        if total <= 0:
+            return json.dumps({"error": "squat_kg + bench_kg + deadlift_kg must be greater than 0."})
         ratios = {
             "squat":    round(squat_kg / total * 100, 1),
             "bench":    round(bench_kg / total * 100, 1),
