@@ -1,6 +1,6 @@
 [project]
 name = "robo-trainer-mcp"
-version = "0.1.0"
+version = "1.1.0"
 description = "MCP server that turns Claude into a full-stack personal trainer"
 requires-python = ">=3.12"
 dependencies = [
