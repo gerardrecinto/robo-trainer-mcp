@@ -3,7 +3,7 @@ name: Pages
 on:
   push:
     branches: [main]
-    paths: ["site/**", "src/robo_trainer/**", "scripts/assemble_site.py", ".github/workflows/pages.yml"]
+    paths: ["site/**", "site-tests/**", "src/robo_trainer/**", "scripts/assemble_site.py", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:

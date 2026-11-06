@@ -9,7 +9,34 @@
 
 ![Robo Trainer MCP logo](docs/assets/logo.svg)
 
-MCP server for nutrition, strength training, powerlifting, strongman, recovery and mood data. Nutrition coaching, strength programming, powerlifting analytics, strongman tracking, recovery monitoring, and mental performance: all from a single local server, nothing leaving your machine.
+**One local server that lets your AI assistant see your whole training picture:** food, lifts, sleep, recovery and mood in one place, so it can answer "why did my squat stall?" from your own data. It is for lifters and coaches who already use an MCP client such as Claude Desktop. Nothing leaves your machine except food search.
+
+**Try the calculators in your browser, no install:** https://gerardrecinto.github.io/robo-trainer-mcp/
+
+## Install in one line
+
+Needs Python 3.12 or later.
+
+```bash
+uvx --from git+https://github.com/gerardrecinto/robo-trainer-mcp robo-trainer-mcp
+```
+
+Then add it to your MCP client (for example Claude Desktop, `~/Library/Application Support/Claude/claude_desktop_config.json`) and restart the client:
+
+```json
+{
+  "mcpServers": {
+    "trainer": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/gerardrecinto/robo-trainer-mcp", "robo-trainer-mcp"]
+    }
+  }
+}
+```
+
+No uv? Use pip instead: `pip install git+https://github.com/gerardrecinto/robo-trainer-mcp`, then set `"command": "robo-trainer-mcp"`. Or use Docker: `docker run --rm -i -v robo-trainer-data:/data ghcr.io/gerardrecinto/robo-trainer-mcp:latest`. It is not on PyPI yet. Use Python 3.12 or 3.13: on 3.14 some dependencies may have no prebuilt wheel yet.
+
+Your data lives in `~/.robo-trainer`. Set `ROBO_TRAINER_HOME` to put it somewhere else.
 
 ![demo](docs/assets/demo.gif)
 
@@ -17,15 +44,17 @@ MCP server for nutrition, strength training, powerlifting, strongman, recovery a
 
 ## The problem it solves
 
-Every fitness app works in isolation. Your food tracker knows your macros. Your training log knows your lifts. Your sleep tracker knows your HRV. None of them talk to each other, and none of them can tell you *why* you're stuck.
+Every fitness app works in isolation. Your food tracker knows your macros. Your training log knows your lifts. Your sleep tracker knows your HRV. None of them talk to each other, and none of them can tell you why you are stuck.
 
-robo-trainer-mcp connects everything. Any MCP client can pull training volume, sleep trends, nutrition, and mood at once: then reason across them like a real coach.
+robo-trainer-mcp keeps those logs together. An MCP client can pull training volume, sleep trends, nutrition and mood at once, then reason across them. The model does the reasoning and it can be wrong. The server supplies your numbers and the calculators.
 
 ---
 
-## Demos
+## Examples
 
-### Diagnosing a plateau
+These conversations show what a client can do. The first uses made-up numbers to show the shape of an answer. The other two show real tool output for the inputs given.
+
+### Diagnosing a plateau (illustrative numbers)
 
 ```
 You: "My squat hasn't moved in 5 weeks and I feel exhausted. What's wrong?"
@@ -36,17 +65,11 @@ The client pulls:
   nutrition_get_weekly_macros()
   mental_get_mood_trend(days=42)
 
-  Squat volume: 12,400 → 15,300 kg  +23%  (no deload)
-  Sleep:        8.1h → 6.3h          ▼ 22%
-  Calories:     2,150 kcal vs 2,600 goal   deficit −450/day
-  Protein:      168 g vs 210 g goal        gap −42 g/day
-
-  Diagnosis: Classic overreaching. Four recovery systems degraded
-  simultaneously. Deload this week, calories to maintenance,
-  8+ hours sleep. Expect a squat PR within 3 weeks.
+Then it can point out, for example: volume up with no deload, sleep trending
+down, calories and protein under goal. Those are the usual overreaching signs.
 ```
 
-### Powerlifting meet prep
+### Powerlifting meet prep (real output)
 
 ```
 You: "I squat 200, bench 130, deadlift 240 at 93 kg bodyweight."
@@ -54,26 +77,51 @@ You: "I squat 200, bench 130, deadlift 240 at 93 kg bodyweight."
   Wilks (1994): 358.1  (Advanced)
   DOTS:         362.7  (Advanced)
 
-  Weakest lift: Bench: 3.2% below elite average proportion.
-  Recommendation: hypertrophy + technique block on bench.
+  Weakest lift vs typical proportions: bench, 3.2% below.
 
-  Attempt suggestions:
-    Squat    180 / 195 / 207.5
-    Bench    117.5 / 127.5 / 135
-    Dead     215 / 235 / 250
+  Attempt suggestions (opener / second / third):
+    Squat    180 / 195 / 202.5
+    Bench    117.5 / 125 / 132.5
+    Dead     215 / 232.5 / 242.5
 ```
 
-### Readiness check
+### Readiness check (real output)
 
 ```
 You: "I slept 6 hours, quality 5/10, soreness 7/10, stress 7/10."
 
   recovery_calculate_readiness(6.0, 5, 7, 7)
 
-  Readiness: 41 / 100
+  Readiness: 58.5 / 100
   Recommendation: light technique session or active recovery.
-  Heavy singles today carry elevated injury risk.
 ```
+
+### Daily targets from your body and goal (real output)
+
+```
+You: "80 kg, 180 cm, 30, male, moderately active. I want to lose fat."
+
+  nutrition_estimate_targets(80, 180, 30, "male", "moderate", "lose")
+
+  Maintenance 2759 kcal. Target 2207 kcal, 160 g protein, 254 g carbs, 61 g fat.
+```
+
+---
+
+## How the numbers are calculated
+
+Every formula is a published one, applied to what you enter. They are estimates, not measurements, and none of this is medical advice.
+
+| Tool area | Method | Limits |
+|---|---|---|
+| One-rep max | Epley and Brzycki rep formulas, plus an RPE chart estimate | Rep formulas lose accuracy above about 10 reps, and the tool warns you |
+| Daily calories | Mifflin-St Jeor equation with activity multipliers 1.2 to 1.9 | Deficit capped near 20 percent, floor of 1200 kcal (women) or 1500 kcal (men) |
+| Protein | 1.6 g per kg to gain or maintain, 2.0 g per kg while cutting | Based on Morton et al. 2018 and the ISSN position stand (1.4 to 2.0 g per kg) |
+| Sleep | Adults need at least 7 hours (AASM and SRS consensus) | The readiness score is a hand-weighted heuristic, not a validated test |
+| Powerlifting scores | DOTS, and the original 1994 Wilks formula | The 2020 Wilks revision is not included. The bands (Beginner to Elite) are rough |
+| Strongman targets, lift ratios | Rough illustrative numbers | Not official standards |
+
+Empty-database results are labelled `sample_data: true` so made-up demo values are never mistaken for yours. Bad input (negative weights, zero reps, RPE above 10) returns a clear error instead of a wrong answer.
 
 ---
 
@@ -82,9 +130,9 @@ You: "I slept 6 hours, quality 5/10, soreness 7/10, stress 7/10."
 ```
                  ┌──────────────────────────────────┐
                  │        MCP client (LLM)           │
-                 │   reasons across all 24 tools     │
+                 │   reasons across all 29 tools     │
                  └─────────────┬────────────────────┘
-                               │  MCP Protocol
+                               │  MCP Protocol (stdio)
                  ┌─────────────▼────────────────────┐
                  │        robo-trainer-mcp           │
                  │         (FastMCP server)          │
@@ -95,15 +143,10 @@ You: "I slept 6 hours, quality 5/10, soreness 7/10, stress 7/10."
              │ ~/.robo-      │  │  (food search only)   │
              │  trainer/     │  └──────────────────────┘
              │  data.db      │
-             │               │
-             │  food_log     │
-             │  training_log │
-             │  sleep_log    │
-             │  mood_log     │
              └───────────────┘
 ```
 
-All personal data stays in `~/.robo-trainer/data.db`. No account required.
+All personal data stays in `~/.robo-trainer/data.db`. No account required. Every tool call is also written to a local audit log in the same folder.
 
 ---
 
@@ -164,58 +207,33 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required.
 
 ---
 
-## Quick start
-
-Not yet published to PyPI. Install from source or use the Docker image below. Use Python 3.12 or 3.13: on 3.14 some dependencies may have no prebuilt wheel yet, and `pip install` then needs a Rust toolchain.
-
-```bash
-git clone https://github.com/gerardrecinto/robo-trainer-mcp
-cd robo-trainer-mcp
-pip install -e .
-robo-trainer-mcp
-```
-
-### Docker
-
-```bash
-docker pull ghcr.io/gerardrecinto/robo-trainer-mcp:latest
-```
-
-Add to your MCP client config (for example Claude Desktop, `~/Library/Application Support/Claude/claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "trainer": {
-      "command": "robo-trainer-mcp"
-    }
-  }
-}
-```
-
 ---
 
-## Resilient module loading
-
-Each tool module (nutrition, training, recovery, etc.) loads independently. If a module fails to import, the server logs the error and continues loading the rest. Version is logged at startup. This means the server comes up cleanly even if one module has a dependency issue.
-
----
-
-## Tests
+## Develop and release
 
 ```bash
+git clone https://github.com/gerardrecinto/robo-trainer-mcp && cd robo-trainer-mcp
+python3 -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev]"
-pytest tests/ -v
-# all tests pass
+ruff check src tests scripts
+pytest                      # unit, integration and stdio end-to-end tests
+npm ci && npm test          # website tests in Chromium, Firefox and WebKit
 ```
 
-## Product Direction
+The tests run the real server against a real SQLite file, and start it as a subprocess to speak MCP over stdio. A golden list pins all 29 tool names. Several tests check formulas against values worked out by hand or from a published example.
 
-This can grow into a local-first AI coaching product: open-source MCP server as the wedge, Pro dashboards for athletes, and Coach Mode for trainers managing clients.
+| Stage | Trigger | What runs |
+|---|---|---|
+| Test | every pull request | ruff, tests on Python 3.12 and 3.13 on Linux and macOS, a wheel installed into a clean virtual environment and started, the Docker image started, the website in three browsers, pip-audit |
+| Merge | `CI gate` passes | the one required check. Pull requests squash-merge into `main`. Dependabot patch and minor updates merge on their own after the gate |
+| Dev | merge to `main` | the `:edge` image is published and the site is deployed to GitHub Pages |
+| Production | a `v*` tag matching the version in `pyproject.toml` | tests, wheel and sdist with checksums, container image with provenance and an SBOM, and a GitHub release |
 
-See [docs/go-to-market.md](docs/go-to-market.md).
+A weekly canary starts the server against the newest `mcp` release, including the 2.x line this project does not support yet.
 
----
+## Product direction
+
+This can grow into a local-first AI coaching product: open-source MCP server as the wedge, Pro dashboards for athletes, and Coach Mode for trainers managing clients. See [docs/go-to-market.md](docs/go-to-market.md).
 
 ## License
 

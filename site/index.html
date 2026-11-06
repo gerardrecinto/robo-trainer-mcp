@@ -110,24 +110,29 @@ pre.raw{margin:0;padding:12px 16px;font-size:12px;line-height:1.55;white-space:p
 .note code,.sub code{overflow-wrap:anywhere}
 .num{text-align:right;font-family:ui-monospace,monospace}
 .tw table{min-width:380px}
+.opt{font-size:14px;margin:14px 0 6px;color:var(--mute)}
+.refs{padding-left:20px;display:grid;gap:10px;max-width:760px}
+.refs li{color:var(--mute)}
+.lab+.lab{margin-top:18px}
 </style>
 </head>
 <body>
 <nav><div class="wrap">
   <a class="logo" href="#top"><i></i>robo-trainer-mcp</a>
-  <div class="links"><a href="#try" class="hide-s">Try it</a><a href="#tools" class="hide-s">Tools</a><a href="#install" class="hide-s">Install</a><a class="btn" href="https://github.com/gerardrecinto/robo-trainer-mcp">GitHub</a></div>
+  <div class="links"><a href="#try" class="hide-s">Try it</a><a href="#tools" class="hide-s">Tools</a><a href="#install" class="hide-s">Install</a><a href="#sources" class="hide-s">Sources</a><a class="btn" href="https://github.com/gerardrecinto/robo-trainer-mcp">GitHub</a></div>
 </div></nav>
 
 <header class="hero" id="top"><div class="wrap">
   <h1>One local server that lets your MCP client see your <em>whole</em> training picture.</h1>
   <p class="lede">An MCP server for nutrition, strength training, powerlifting, strongman, recovery and mood. Your food log, lifts, sleep and stress live in one local database, so Claude can reason across them. Nothing leaves your machine except food search.</p>
-  <div class="cta"><a class="btn primary" href="#try">Run the powerlifting tools</a><a class="btn" href="#tools">Browse the tools</a></div>
+  <div class="cta"><a class="btn primary" href="#try">Run the calculators</a><a class="btn" href="#tools">Browse the tools</a></div>
   <div class="stats"><div><b id="n-tools">29</b>tools</div><div><b>6</b>areas</div><div><b>0</b>accounts</div></div>
+  <p class="note" style="margin-top:14px">Install in one line: <a href="#install">see the install options</a></p>
 </div></header>
 
 
 <section id="try"><div class="wrap">
-  <h2>Run the powerlifting tools</h2>
+  <h2>Try the calculators</h2>
   <p class="sub">The four powerlifting tools do not need a database, so they run here. The page loads the repo's real tool code, registers it on a stand-in MCP object and calls the same functions Claude would call. The lifts are whatever you type.</p>
   <div class="lab">
     <div class="card"><h3><span>Lifts</span><span class="tools"><button class="chip" id="ex">Example lifter</button></span></h3>
@@ -141,7 +146,30 @@ pre.raw{margin:0;padding:12px 16px;font-size:12px;line-height:1.55;white-space:p
     </div>
     <div class="card" id="res" aria-live="polite"><h3><span>Tool results</span></h3><div class="status" id="boot">Loading the tools (about 10 MB the first time, cached after)...</div></div>
   </div>
-  <p class="note">The tools that log meals, sets, sleep and mood write to a local SQLite file, so they are not run here.</p>
+  <div class="lab" id="strength-lab">
+    <div class="card"><h3><span>Strength: one-rep max</span><span class="tools"><button class="chip" id="ex-1rm">Example set</button></span></h3>
+      <div class="form">
+        <div><label for="w1">weight (kg)</label><input id="w1" type="number" value="100" min="1" max="1000" step="0.5"></div>
+        <div><label for="r1">reps</label><input id="r1" type="number" value="5" min="1" max="30" step="1"></div>
+        <div><label for="rpe1">RPE (how hard it felt)</label><select id="rpe1"><option value="">not rated</option><option>10</option><option>9.5</option><option>9</option><option>8.5</option><option>8</option><option>7.5</option><option>7</option><option>6.5</option><option>6</option></select></div>
+      </div>
+    </div>
+    <div class="card" id="res1" aria-live="polite"><h3><span>Estimate</span></h3><div class="status">Loading the tools...</div></div>
+  </div>
+  <div class="lab" id="nutrition-lab">
+    <div class="card"><h3><span>Nutrition: daily targets</span><span class="tools"><button class="chip" id="ex-nut">Example</button></span></h3>
+      <div class="form">
+        <div><label for="nw">weight (kg)</label><input id="nw" type="number" value="80" min="30" max="300" step="0.5"></div>
+        <div><label for="nh">height (cm)</label><input id="nh" type="number" value="180" min="100" max="250" step="1"></div>
+        <div><label for="na">age (18 or older)</label><input id="na" type="number" value="30" min="18" max="100" step="1"></div>
+        <div><label for="ns">sex (for the equation)</label><select id="ns"><option value="male">male</option><option value="female">female</option></select></div>
+        <div><label for="nact">activity</label><select id="nact"><option value="sedentary">sedentary</option><option value="light">light</option><option value="moderate" selected>moderate</option><option value="very">very active</option><option value="extra">extra active</option></select></div>
+        <div><label for="ng">goal</label><select id="ng"><option value="lose">lose fat</option><option value="maintain" selected>maintain</option><option value="gain">gain muscle</option></select></div>
+      </div>
+    </div>
+    <div class="card" id="res2" aria-live="polite"><h3><span>Targets</span></h3><div class="status">Loading the tools...</div></div>
+  </div>
+  <p class="note">These are the same functions the MCP tools call. The tools that log meals, sets, sleep and mood write to a local SQLite file, so they are not run here. Nothing you type leaves this page.</p>
 </div></section>
 
 <section id="tools"><div class="wrap">
@@ -163,25 +191,42 @@ pre.raw{margin:0;padding:12px 16px;font-size:12px;line-height:1.55;white-space:p
 
 <section id="install" class="install"><div class="wrap">
   <h2>Install</h2>
-  <p class="sub">Python 3.12 or later. Not on PyPI yet, so install from source or use the image.</p>
+  <p class="sub">Needs Python 3.12 or later. Pick one. Each command was run on a clean machine before it was written here.</p>
   <div class="cols2">
     <div>
-<pre>git clone https://github.com/gerardrecinto/robo-trainer-mcp
-cd robo-trainer-mcp
-pip install -e .
+      <h3 class="opt">Fastest, no clone (uv)</h3>
+      <pre id="cmd-uvx">uvx --from git+https://github.com/gerardrecinto/robo-trainer-mcp robo-trainer-mcp</pre>
+      <h3 class="opt">Or with pip</h3>
+      <pre id="cmd-pip">pip install git+https://github.com/gerardrecinto/robo-trainer-mcp
 robo-trainer-mcp</pre>
+      <h3 class="opt">Or with Docker</h3>
+      <pre id="cmd-docker">docker run --rm -i -v robo-trainer-data:/data ghcr.io/gerardrecinto/robo-trainer-mcp:latest</pre>
     </div>
     <div>
-<pre>{
+      <h3 class="opt">Add it to your MCP client</h3>
+<pre id="cmd-config">{
   "mcpServers": {
     "trainer": {
-      "command": "robo-trainer-mcp"
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/gerardrecinto/robo-trainer-mcp", "robo-trainer-mcp"]
     }
   }
 }</pre>
-      <p class="note">Put that in your client's MCP config (for example <code>claude_desktop_config.json</code>). A Docker image is at <code>ghcr.io/gerardrecinto/robo-trainer-mcp</code>.</p>
+      <p class="note">Put that in your client's MCP config (for example <code>claude_desktop_config.json</code>), then restart the client. If you installed with pip, use <code>"command": "robo-trainer-mcp"</code> instead. Your data stays in <code>~/.robo-trainer</code>. Set <code>ROBO_TRAINER_HOME</code> to move it. Not on PyPI yet.</p>
     </div>
   </div>
+</div></section>
+
+<section id="sources"><div class="wrap">
+  <h2>Where the numbers come from</h2>
+  <p class="sub">Every formula is a published one, applied to what you enter. They give estimates, not measurements.</p>
+  <ul class="refs">
+    <li><b>One-rep max.</b> Epley and Brzycki rep formulas. Both lose accuracy above about 10 reps, and the tool says so. The RPE estimate uses the widely shared RPE chart (Tuchscherer), an average from lifters.</li>
+    <li><b>Daily calories.</b> Mifflin-St Jeor energy equation (<a href="https://doi.org/10.1093/ajcn/51.2.241">Mifflin et al., 1990</a>) with standard activity multipliers. Deficits are capped near 20 percent and never go below 1200 kcal (women) or 1500 kcal (men) without medical supervision.</li>
+    <li><b>Protein.</b> About 1.6 g per kg supports muscle gain in most people (<a href="https://doi.org/10.1136/bjsports-2017-097608">Morton et al., 2018</a>). The ISSN position stand gives 1.4 to 2.0 g per kg (<a href="https://doi.org/10.1186/s12970-017-0177-8">J&auml;ger et al., 2017</a>). The tool uses 2.0 g per kg during fat loss to help keep muscle.</li>
+    <li><b>Sleep.</b> Adults need at least 7 hours a night (<a href="https://doi.org/10.5665/sleep.4716">Watson et al., 2015</a>). The readiness score gives full sleep credit from 7 hours. The rest of the score is a simple hand-weighted heuristic, not a validated test.</li>
+    <li><b>Powerlifting scores.</b> DOTS and the original 1994 Wilks formula. The 2020 Wilks revision uses different coefficients and is not included. Strongman targets and lift-ratio shares are rough guides, not official standards.</li>
+  </ul>
 </div></section>
 
 <section><div class="wrap">
@@ -189,7 +234,7 @@ robo-trainer-mcp</pre>
     <strong>What this does not do</strong>
     <ul>
       <li>It is a tool server, not a coach. The client model does the reasoning, and it can be wrong.</li>
-      <li>Nothing here is medical advice. The readiness and overreaching checks are simple heuristics.</li>
+      <li>Nothing here is medical advice. Talk to a clinician before big diet changes, especially if you are pregnant, under 18, or have a medical condition. The readiness and overreaching checks are simple heuristics.</li>
       <li>Wilks and DOTS are standard formulas applied to the numbers you enter. They are only as good as those numbers.</li>
     </ul>
   </div>
@@ -210,6 +255,7 @@ robo-trainer-mcp</pre>
   const track = (n) => { try { if (window.plausible) window.plausible(n); } catch (e) {} };
   const PY = `
 import json
+from robo_trainer import formulas
 from robo_trainer.tools import powerlifting
 TOOLS = {}
 class FakeMcp:
@@ -219,6 +265,18 @@ class FakeMcp:
             return fn
         return deco
 powerlifting.register(FakeMcp(), lambda name, params: None)
+def one_rm(w, r, rpe):
+    out = {"epley": formulas.epley_1rm(w, r), "brzycki": formulas.brzycki_1rm(w, r), "high_reps": r > 10}
+    if rpe:
+        rtf = r + (10 - rpe)
+        if rtf <= 12:
+            pct = formulas.percent_for_reps_to_failure(rtf)
+            out["rpe"] = {"percent": round(pct, 1), "e1rm": round(w / (pct / 100.0), 1)}
+        else:
+            out["rpe"] = {"error": "reps plus reps in reserve must be 12 or fewer"}
+    return json.dumps(out)
+def targets(w, h, a, sex, act, goal):
+    return json.dumps(formulas.estimate_targets(w, h, a, sex, act, goal))
 def go(bw, sex, sq, bp, dl):
     total = sq + bp + dl
     return json.dumps({
@@ -245,6 +303,36 @@ def go(bw, sex, sq, bp, dl):
   ["bw", "sex", "sq", "bp", "dl"].forEach((i) => $(i).addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(() => { run(); track("rt_calc"); }, 200); }));
   $("ex").addEventListener("click", () => { [["bw", 93], ["sex", "m"], ["sq", 200], ["bp", 130], ["dl", 240]].forEach(([i, v]) => ($(i).value = v)); run(); });
 
+  function run1() {
+    if (!py) return;
+    const w = parseFloat($("w1").value), r = parseInt($("r1").value, 10), rpe = parseFloat($("rpe1").value) || 0;
+    const box = (h) => ($("res1").innerHTML = '<h3><span>Estimate</span></h3>' + h);
+    if (!(w > 0 && w <= 1000) || !(r >= 1 && r <= 30)) { box('<div class="status">Enter a weight above 0 and 1 to 30 reps.</div>'); return; }
+    try {
+      py.globals.set("_w", w); py.globals.set("_r", r); py.globals.set("_rpe", rpe);
+      const o = JSON.parse(py.runPython("one_rm(_w, _r, _rpe)"));
+      const rpeCard = o.rpe ? (o.rpe.error ? `<div><b>-</b><span>${esc(o.rpe.error)}</span></div>` : `<div><b>${o.rpe.e1rm}</b><span>kg from RPE (${o.rpe.percent}% of 1RM)</span></div>`) : "";
+      box(`<div class="kp"><div><b>${o.epley}</b><span>kg, Epley</span></div><div><b>${o.brzycki}</b><span>kg, Brzycki</span></div>${rpeCard}</div>` + (o.high_reps ? '<div class="note">Rep formulas lose accuracy above about 10 reps. A heavier set of 1 to 5 reps gives a more reliable estimate.</div>' : ""));
+    } catch (e) { box('<div class="status" style="color:var(--err)">' + esc(String(e.message || e).trim().split("\n").pop()) + "</div>"); }
+  }
+  function run2() {
+    if (!py) return;
+    const n = (i) => parseFloat($(i).value);
+    const box = (h) => ($("res2").innerHTML = '<h3><span>Targets</span></h3>' + h);
+    if (!(n("nw") >= 30 && n("nw") <= 300 && n("nh") >= 100 && n("nh") <= 250 && n("na") >= 18 && n("na") <= 100)) { box('<div class="status">Enter weight 30 to 300 kg, height 100 to 250 cm, and age 18 to 100.</div>'); return; }
+    try {
+      py.globals.set("_a", [n("nw"), n("nh"), Math.round(n("na")), $("ns").value, $("nact").value, $("ng").value]);
+      const o = JSON.parse(py.runPython("targets(*_a)"));
+      if (o.error) { box('<div class="status">' + esc(o.error) + "</div>"); return; }
+      const t = o.targets;
+      box(`<div class="kp"><div><b>${t.calories}</b><span>kcal a day</span></div><div><b>${t.protein_g}</b><span>g protein</span></div><div><b>${t.carbs_g}</b><span>g carbs</span></div><div><b>${t.fat_g}</b><span>g fat</span></div></div><div class="note">Maintenance is about ${o.maintenance_kcal} kcal. ${o.notes.map(esc).join(" ")}</div>`);
+    } catch (e) { box('<div class="status" style="color:var(--err)">' + esc(String(e.message || e).trim().split("\n").pop()) + "</div>"); }
+  }
+  ["w1", "r1", "rpe1"].forEach((i) => $(i).addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(() => { run1(); track("rt_1rm"); }, 200); }));
+  ["nw", "nh", "na", "ns", "nact", "ng"].forEach((i) => $(i).addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(() => { run2(); track("rt_targets"); }, 200); }));
+  $("ex-1rm").addEventListener("click", () => { [["w1", 100], ["r1", 5], ["rpe1", ""]].forEach(([i, v]) => ($(i).value = v)); run1(); });
+  $("ex-nut").addEventListener("click", () => { [["nw", 80], ["nh", 180], ["na", 30], ["ns", "male"], ["nact", "moderate"], ["ng", "maintain"]].forEach(([i, v]) => ($(i).value = v)); run2(); });
+
   let tools = [], area = "all";
   const LABEL = { training: "Strength", nutrition: "Nutrition", powerlifting: "Powerlifting", strongman: "Strongman", mental_health: "Mental", recovery: "Recovery" };
   function draw() {
@@ -266,9 +354,9 @@ def go(bw, sex, sq, bp, dl):
     try {
       py = await loadPyodide();
       py.FS.mkdirTree("/lib/robo_trainer/tools");
-      for (const f of ["__init__.py", "validation.py", "tools/__init__.py", "tools/powerlifting.py"]) { const r = await fetch("py/" + f); if (!r.ok) throw new Error("could not load " + f); py.FS.writeFile("/lib/robo_trainer/" + f, await r.text()); }
+      for (const f of ["__init__.py", "validation.py", "formulas.py", "tools/__init__.py", "tools/powerlifting.py"]) { const r = await fetch("py/" + f); if (!r.ok) throw new Error("could not load " + f); py.FS.writeFile("/lib/robo_trainer/" + f, await r.text()); }
       py.runPython("import sys; sys.path.insert(0, '/lib')"); py.runPython(PY);
-      window.__RT_READY__ = true; run();
+      window.__RT_READY__ = true; run(); run1(); run2();
     } catch (e) { $("boot").textContent = "The in-browser tools did not load (" + String(e.message || e).split("\n").pop() + "). The install steps below run the same code."; }
   })();
 })();

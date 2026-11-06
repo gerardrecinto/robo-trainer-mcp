@@ -6,37 +6,10 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from robo_trainer.db import get_conn, init_db
+from robo_trainer.formulas import brzycki_1rm as _brzycki_1rm
+from robo_trainer.formulas import epley_1rm as _epley_1rm
+from robo_trainer.formulas import percent_for_reps_to_failure as _percent_for_reps_to_failure
 from robo_trainer.validation import check, sample
-
-
-def _epley_1rm(weight: float, reps: int) -> float:
-    if reps == 1:
-        return weight
-    return round(weight * (1 + reps / 30.0), 1)
-
-
-def _brzycki_1rm(weight: float, reps: int) -> float:
-    if reps == 1:
-        return weight
-    return round(weight * 36.0 / (37.0 - reps), 1)
-
-
-# Approximate %1RM when a set is taken to failure, by reps to failure. This is the widely used
-# RPE chart (Tuchscherer). It is an average from lifters, so treat results as estimates.
-_PERCENT_BY_REPS_TO_FAILURE = {
-    1: 100.0, 2: 95.5, 3: 92.2, 4: 89.2, 5: 86.3, 6: 83.7,
-    7: 81.1, 8: 78.6, 9: 76.2, 10: 73.9, 11: 70.7, 12: 68.0,
-}
-
-
-def _percent_for_reps_to_failure(reps_to_failure: float) -> float:
-    low = int(reps_to_failure)
-    high = min(low + 1, 12)
-    if low >= 12:
-        return _PERCENT_BY_REPS_TO_FAILURE[12]
-    frac = reps_to_failure - low
-    a, b = _PERCENT_BY_REPS_TO_FAILURE[low], _PERCENT_BY_REPS_TO_FAILURE[high]
-    return a + (b - a) * frac
 
 
 def register(mcp: Any, audit: Callable) -> None:
