@@ -117,3 +117,23 @@ def test_overreaching_does_not_count_the_unfinished_current_week(server):
     out = call(server, "training_check_overreaching", exercise="squat", weeks=4)
     assert out["weeks_analyzed"] == 2
     assert out["risk"] == "low"
+
+
+def test_readme_examples_show_real_tool_output(server):
+    """The README quotes these numbers. If a formula changes, this fails until the README is updated."""
+    from tests.helpers import REPO_ROOT
+
+    readme = (REPO_ROOT / "README.md").read_text()
+    wilks = call(server, "pl_calculate_wilks", bodyweight_kg=93, total_kg=570, sex="m")["wilks_score"]
+    dots = call(server, "pl_calculate_dots", bodyweight_kg=93, total_kg=570, sex="m")["dots_score"]
+    assert f"{wilks:.1f}" in readme and f"{dots:.1f}" in readme
+    attempts = call(server, "pl_predict_attempts", squat_kg=200, bench_kg=130, deadlift_kg=240)
+    for lift in ("squat", "bench", "deadlift"):
+        a = attempts[lift]
+        text = " / ".join(f"{a[k]:g}" for k in ("opener", "second", "third_pr"))
+        assert text in readme, text
+    readiness = call(server, "recovery_calculate_readiness", sleep_hours=6, sleep_quality=5, soreness_1_10=7, stress_1_10=7)
+    assert f"{readiness['readiness_score']}" in readme
+    targets = call(server, "nutrition_estimate_targets", weight_kg=80, height_cm=180, age=30, sex="male", activity="moderate", goal="lose")
+    assert f"{targets['maintenance_kcal']} kcal" in readme and f"{targets['targets']['calories']} kcal" in readme
+    assert "29 tools" in readme

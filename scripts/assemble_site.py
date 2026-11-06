@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 # The in-browser demo runs the real powerlifting tools in Pyodide. Every module they import
 # has to be listed here, or the demo breaks on the live site.
-PYTHON_FILES = ["__init__.py", "validation.py", "tools/__init__.py", "tools/powerlifting.py"]
+PYTHON_FILES = ["__init__.py", "validation.py", "formulas.py", "tools/__init__.py", "tools/powerlifting.py"]
 
 
 def tool_list(tools_dir: Path) -> list[dict]:

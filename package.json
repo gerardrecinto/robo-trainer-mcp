@@ -1,0 +1,11 @@
+{
+  "name": "robo-trainer-mcp-site-tests",
+  "private": true,
+  "scripts": {
+    "assemble": "python3 scripts/assemble_site.py _site",
+    "test": "npm run assemble && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0"
+  }
+}
