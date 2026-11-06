@@ -53,7 +53,9 @@ def test_volume_trend_returns_demo_when_no_data():
     training = _fresh_training()
     mcp = _FakeMCP()
     training.register(mcp, lambda t, p: None)
-    result = json.loads(mcp.tools["training_get_volume_trend"](exercise="squat", weeks=4))
+    out = json.loads(mcp.tools["training_get_volume_trend"](exercise="squat", weeks=4))
+    assert out["sample_data"] is True
+    result = out["data"]
     assert result["exercise"] == "squat"
     assert len(result["trend"]) == 4
     for week in result["trend"]:
@@ -74,7 +76,9 @@ def test_bodyweight_trend_returns_demo_when_no_data():
     training = _fresh_training()
     mcp = _FakeMCP()
     training.register(mcp, lambda t, p: None)
-    result = json.loads(mcp.tools["training_get_bodyweight_trend"](days=14))
+    out = json.loads(mcp.tools["training_get_bodyweight_trend"](days=14))
+    assert out["sample_data"] is True
+    result = out["data"]
     assert len(result["days"]) == 14
     assert "average_kg" in result
     assert "net_change_kg" in result
@@ -84,7 +88,9 @@ def test_check_overreaching_returns_demo_when_no_data():
     training = _fresh_training()
     mcp = _FakeMCP()
     training.register(mcp, lambda t, p: None)
-    result = json.loads(mcp.tools["training_check_overreaching"](exercise="squat", weeks=4))
+    out = json.loads(mcp.tools["training_check_overreaching"](exercise="squat", weeks=4))
+    assert out["sample_data"] is True
+    result = out["data"]
     assert result["exercise"] == "squat"
     assert result["risk"] in ("elevated", "moderate", "low", "insufficient_data")
     assert "recommendation" in result

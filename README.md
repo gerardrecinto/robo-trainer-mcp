@@ -51,8 +51,8 @@ The client pulls:
 ```
 You: "I squat 200, bench 130, deadlift 240 at 93 kg bodyweight."
 
-  Wilks 2020:  358.4  (Advanced)
-  DOTS:        347.1  (Advanced)
+  Wilks (1994): 358.1  (Advanced)
+  DOTS:         362.7  (Advanced)
 
   Weakest lift: Bench: 3.2% below elite average proportion.
   Recommendation: hypertrophy + technique block on bench.
@@ -107,7 +107,7 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required.
 
 ---
 
-## Tools: 27 total
+## Tools: 29 total
 
 ### Nutrition
 | Tool | Description |
@@ -116,6 +116,7 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required.
 | `nutrition_log_meal` | Log food with calories and macros |
 | `nutrition_get_daily_summary` | Daily totals vs. goals |
 | `nutrition_get_weekly_macros` | 7-day rolling average |
+| `nutrition_estimate_targets` | Estimate calories and macros from your body, activity and goal (Mifflin-St Jeor) |
 | `nutrition_set_goals` | Set calorie and macro targets |
 
 ### Strength Training
@@ -123,7 +124,8 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required.
 |---|---|
 | `training_log_set` | Log a set: weight, reps, RPE |
 | `training_get_prs` | Personal records for every exercise |
-| `training_calculate_1rm` | Epley estimate + full percentage chart |
+| `training_calculate_1rm` | Epley and Brzycki estimates + full percentage chart |
+| `training_estimate_1rm_from_rpe` | Estimate your 1RM from a set and its RPE |
 | `training_get_volume_trend` | Weekly volume trend over N weeks |
 | `training_get_session_history` | Session history for an exercise |
 | `training_log_bodyweight` | Log bodyweight in kg for a date |
@@ -133,10 +135,10 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required.
 ### Powerlifting
 | Tool | Description |
 |---|---|
-| `pl_calculate_wilks` | Wilks 2020 score + classification |
-| `pl_calculate_dots` | DOTS score + classification |
+| `pl_calculate_wilks` | Original (1994) Wilks score + rough band |
+| `pl_calculate_dots` | DOTS score + rough band |
 | `pl_predict_attempts` | Opener, 2nd, 3rd attempt suggestions |
-| `pl_analyze_sbd_ratio` | Identify weakest lift vs. elite proportions |
+| `pl_analyze_sbd_ratio` | Compare your squat, bench and deadlift shares with typical proportions |
 
 ### Strongman
 | Tool | Description |

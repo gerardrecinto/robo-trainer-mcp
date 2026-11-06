@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from robo_trainer.db import get_conn, init_db
+from robo_trainer.validation import check, sample
 
 
 def register(mcp: Any, audit: Callable) -> None:
@@ -15,6 +16,9 @@ def register(mcp: Any, audit: Callable) -> None:
     def mental_log_mood(mood: int, energy: int, stress: int, notes: str = "", date: str = "") -> str:
         """Log mood, energy, and stress (1–10 each). 10 = best/highest."""
         audit("mental_log_mood", {"mood": mood, "energy": energy, "stress": stress})
+        err = check(mood=(mood, 1, 10, True), energy=(energy, 1, 10, True), stress=(stress, 1, 10, True))
+        if err:
+            return err
         d = date or datetime.now().strftime("%Y-%m-%d")
         with get_conn() as conn:
             conn.execute(
@@ -34,7 +38,7 @@ def register(mcp: Any, audit: Callable) -> None:
                 (start,),
             ).fetchall()
         if not rows:
-            return json.dumps(_demo_mood_trend(days), indent=2)
+            return sample(_demo_mood_trend(days))
         data = [dict(r) for r in rows]
         avg = {k: round(sum(r[k] for r in data) / len(data), 1) for k in ("mood", "energy", "stress")}
         return json.dumps({"days": data, "averages": avg}, indent=2)
@@ -50,13 +54,18 @@ def register(mcp: Any, audit: Callable) -> None:
         with get_conn() as conn:
             mood_rows = conn.execute("SELECT date, energy, stress FROM mood_log").fetchall()
             train_rows = conn.execute(
-                "SELECT date, MAX(weight_kg * (1 + reps / 30.0)) top_1rm FROM training_log GROUP BY date"
+                "SELECT date, MAX(weight_kg * (1 + reps / 30.0)) top_1rm FROM training_log "
+                "WHERE reps BETWEEN 1 AND 10 GROUP BY date"
             ).fetchall()
         mood_by_date  = {r["date"]: r for r in mood_rows}
         train_by_date = {r["date"]: r["top_1rm"] for r in train_rows}
         paired = set(mood_by_date) & set(train_by_date)
         if len(paired) < 5:
-            return json.dumps(_demo_correlation(), indent=2)
+            return json.dumps({
+                "data_points": len(paired),
+                "status": "insufficient_data",
+                "message": f"Found {len(paired)} days with both a mood log and a training set of 1 to 10 reps. Log at least 5 (10 or more is better) to see a pattern.",
+            }, indent=2)
         energy = [mood_by_date[d]["energy"] for d in paired]
         stress = [mood_by_date[d]["stress"] for d in paired]
         perf   = [train_by_date[d] for d in paired]
@@ -67,6 +76,8 @@ def register(mcp: Any, audit: Callable) -> None:
             "energy_vs_performance": {"pearson_r": energy_r, "interpretation": _interpret_r(energy_r)},
             "stress_vs_performance": {"pearson_r": stress_r, "interpretation": _interpret_r(stress_r)},
             "insight": _insight(energy_r, stress_r),
+            "confidence": "low" if len(paired) < 10 else "moderate",
+            "caution": "Correlation is not causation, and a few weeks of self-rated numbers is a small sample. Use it to ask questions, not to decide.",
         }, indent=2)
 
 
@@ -96,13 +107,13 @@ def _insight(energy_r: float, stress_r: float) -> str:
     parts = []
     if energy_r >= 0.5:
         parts.append(
-            "Your training output closely tracks energy levels — "
-            "prioritize sleep and nutrition before heavy sessions."
+            "Your best sets tend to come on high-energy days. "
+            "Sleep and food before heavy sessions may be worth testing."
         )
     if stress_r <= -0.4:
         parts.append(
-            "High stress reliably reduces your performance — "
-            "consider stress management protocols before competition."
+            "Higher stress days tend to line up with weaker sets. "
+            "Try a calming routine before key sessions and see whether it changes the pattern."
         )
     if not parts:
         parts.append("No strong mind-body link detected yet. Log more sessions to surface patterns.")
@@ -127,20 +138,3 @@ def _demo_mood_trend(days: int) -> dict:
     return {"days": data, "averages": avg}
 
 
-def _demo_correlation() -> dict:
-    return {
-        "data_points": 28,
-        "energy_vs_performance": {
-            "pearson_r": 0.71,
-            "interpretation": "Strong positive correlation (r=0.71)",
-        },
-        "stress_vs_performance": {
-            "pearson_r": -0.58,
-            "interpretation": "Moderate negative correlation (r=-0.58)",
-        },
-        "insight": (
-            "Your training output closely tracks energy levels — prioritize sleep and nutrition "
-            "before heavy sessions. High stress reliably reduces your performance — consider "
-            "stress management protocols before competition."
-        ),
-    }

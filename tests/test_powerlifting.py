@@ -22,7 +22,7 @@ def test_wilks_known_value():
     pl.register(mcp, lambda t, p: None)
     result = json.loads(mcp.tools["pl_calculate_wilks"](bodyweight_kg=93.0, total_kg=570.0, sex="m"))
     assert 300 < result["wilks_score"] < 500
-    assert result["classification"] in ("Advanced", "Master", "Intermediate")
+    assert result["classification"] in ("Advanced", "Very advanced", "Intermediate")
 
 
 def test_dots_known_value():

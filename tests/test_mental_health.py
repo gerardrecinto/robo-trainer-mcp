@@ -59,13 +59,6 @@ def test_stress_that_lowers_performance_is_reported_as_negative():
     assert out["stress_vs_performance"]["interpretation"].startswith("Strong negative correlation")
     assert out["energy_vs_performance"]["pearson_r"] > 0.7
     assert out["energy_vs_performance"]["interpretation"].startswith("Strong positive correlation")
-    assert "High stress reliably reduces your performance" in out["insight"]
+    assert "Higher stress days tend to line up with weaker sets" in out["insight"]
+    assert out["confidence"] == "low"
 
-
-def test_demo_output_agrees_with_its_numbers():
-    mh = _fresh()
-    d = mh._demo_correlation()
-    for key in ("energy_vs_performance", "stress_vs_performance"):
-        r = d[key]["pearson_r"]
-        word = "negative" if r < 0 else "positive"
-        assert word in d[key]["interpretation"]

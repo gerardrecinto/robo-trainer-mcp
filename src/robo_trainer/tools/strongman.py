@@ -6,8 +6,10 @@ from datetime import datetime
 from typing import Any
 
 from robo_trainer.db import get_conn, init_db
+from robo_trainer.validation import sample
 
-# Approximate benchmarks based on publicly available competition results
+# Rough illustrative targets in kg. They are not official standards and are not sourced from a
+# specific results database. Event rules and implement weights vary a lot between contests.
 _STANDARDS: dict[str, dict[str, float]] = {
     "log_press":    {"novice": 80,  "regional": 120, "national": 150, "pro": 180},
     "deadlift":     {"novice": 180, "regional": 250, "national": 300, "pro": 360},
@@ -55,7 +57,7 @@ def register(mcp: Any, audit: Callable) -> None:
                 "FROM event_log GROUP BY event_name"
             ).fetchall()
         if not rows:
-            return json.dumps(_demo_event_prs(), indent=2)
+            return sample(_demo_event_prs())
         return json.dumps([dict(r) for r in rows], indent=2)
 
     @mcp.tool()
@@ -70,12 +72,12 @@ def register(mcp: Any, audit: Callable) -> None:
                 (key,),
             ).fetchall()
         if not rows:
-            return json.dumps(_demo_event_history(event_name), indent=2)
+            return sample(_demo_event_history(event_name))
         return json.dumps([dict(r) for r in rows], indent=2)
 
     @mcp.tool()
     def strongman_competition_standards(event_name: str, implement_weight_kg: float) -> str:
-        """Compare a performance to novice → regional → national → pro standards."""
+        """Compare a lift to rough illustrative novice, regional, national and pro targets."""
         audit("strongman_competition_standards", {"event_name": event_name, "implement_weight_kg": implement_weight_kg})
         key = event_name.lower().replace(" ", "_")
         standards = _STANDARDS.get(key)
@@ -100,6 +102,7 @@ def register(mcp: Any, audit: Callable) -> None:
             "standards_kg": standards,
             "current_level": current_level,
             "kg_to_next_level": gaps,
+            "note": "Rough illustrative targets, not official standards. Implements and rules differ between contests.",
         }, indent=2)
 
 

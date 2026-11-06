@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>robo-trainer-mcp: a local coaching tool server</title>
-<meta name="description" content="Run the real powerlifting tools in your browser (Wilks, DOTS, attempt picks, lift ratios) and browse all 27 tools of an MCP server for nutrition, training, recovery and mental performance.">
+<meta name="description" content="Run the real powerlifting tools in your browser (Wilks, DOTS, attempt picks, lift ratios) and browse all 29 tools of an MCP server for nutrition, training, recovery and mental performance.">
 <meta property="og:title" content="robo-trainer-mcp">
-<meta property="og:description" content="Run the real powerlifting tools in your browser (Wilks, DOTS, attempt picks, lift ratios) and browse all 27 tools of an MCP server for nutrition, training, recovery and mental performance.">
+<meta property="og:description" content="Run the real powerlifting tools in your browser (Wilks, DOTS, attempt picks, lift ratios) and browse all 29 tools of an MCP server for nutrition, training, recovery and mental performance.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314b8a6'/%3E%3Ccircle cx='16' cy='16' r='6' fill='none' stroke='%23fff' stroke-width='3'/%3E%3C/svg%3E">
 <style>
@@ -122,7 +122,7 @@ pre.raw{margin:0;padding:12px 16px;font-size:12px;line-height:1.55;white-space:p
   <h1>One local server that lets your MCP client see your <em>whole</em> training picture.</h1>
   <p class="lede">An MCP server for nutrition, strength training, powerlifting, strongman, recovery and mood. Your food log, lifts, sleep and stress live in one local database, so Claude can reason across them. Nothing leaves your machine except food search.</p>
   <div class="cta"><a class="btn primary" href="#try">Run the powerlifting tools</a><a class="btn" href="#tools">Browse the tools</a></div>
-  <div class="stats"><div><b id="n-tools">27</b>tools</div><div><b>6</b>areas</div><div><b>0</b>accounts</div></div>
+  <div class="stats"><div><b id="n-tools">29</b>tools</div><div><b>6</b>areas</div><div><b>0</b>accounts</div></div>
 </div></header>
 
 
@@ -232,7 +232,7 @@ def go(bw, sex, sq, bp, dl):
     const a = r.attempts;
     const row = (n, k) => `<tr><td>${n}</td><td class="num">${a[k].opener}</td><td class="num">${a[k].second}</td><td class="num">${a[k].third_pr}</td><td class="num">${a[k].third_big}</td></tr>`;
     $("res").innerHTML = `<h3><span>Tool results</span></h3>
-      <div class="kp"><div><b>${r.wilks.wilks_score}</b><span>Wilks 2020, ${esc(r.wilks.classification)}</span></div><div><b>${r.dots.dots_score}</b><span>DOTS, ${esc(r.dots.classification)}</span></div><div><b>${r.sbd.total_kg ?? ""}</b><span>total kg</span></div></div>
+      <div class="kp"><div><b>${r.wilks.wilks_score}</b><span>Wilks (1994), ${esc(r.wilks.classification)}</span></div><div><b>${r.dots.dots_score}</b><span>DOTS, ${esc(r.dots.classification)}</span></div><div><b>${r.sbd.total_kg ?? ""}</b><span>total kg</span></div></div>
       <div class="sec"><h4>pl_predict_attempts</h4><div class="tw" style="border:0"><table><thead><tr><th>lift</th><th>opener</th><th>second</th><th>third</th><th>third, big</th></tr></thead><tbody>${row("squat", "squat")}${row("bench", "bench")}${row("deadlift", "deadlift")}</tbody></table></div></div>
       <div class="sec"><h4>pl_analyze_sbd_ratio</h4>${r.sbd.error ? esc(r.sbd.error) : `<div>${esc(r.sbd.recommendation)}</div><pre class="raw">${esc(JSON.stringify({ ratios_pct: r.sbd.ratios_pct, deviation_from_elite_avg: r.sbd.deviation_from_elite_avg }, null, 2))}</pre>`}</div>`;
   }
@@ -266,7 +266,7 @@ def go(bw, sex, sq, bp, dl):
     try {
       py = await loadPyodide();
       py.FS.mkdirTree("/lib/robo_trainer/tools");
-      for (const f of ["__init__.py", "tools/__init__.py", "tools/powerlifting.py"]) { const r = await fetch("py/" + f); if (!r.ok) throw new Error("could not load " + f); py.FS.writeFile("/lib/robo_trainer/" + f, await r.text()); }
+      for (const f of ["__init__.py", "validation.py", "tools/__init__.py", "tools/powerlifting.py"]) { const r = await fetch("py/" + f); if (!r.ok) throw new Error("could not load " + f); py.FS.writeFile("/lib/robo_trainer/" + f, await r.text()); }
       py.runPython("import sys; sys.path.insert(0, '/lib')"); py.runPython(PY);
       window.__RT_READY__ = true; run();
     } catch (e) { $("boot").textContent = "The in-browser tools did not load (" + String(e.message || e).split("\n").pop() + "). The install steps below run the same code."; }
