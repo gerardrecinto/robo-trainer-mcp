@@ -2,24 +2,23 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
 from dotenv import load_dotenv
+from mcp.server.fastmcp import FastMCP
+
+from robo_trainer.db import data_dir
 
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-mcp = FastMCP(
-    "robo-trainer",
-    instructions=(
-        "Full-stack personal trainer MCP: nutrition, strength training, "
-        "powerlifting, strongman, recovery, and mental performance coaching."
-    ),
+INSTRUCTIONS = (
+    "Full-stack personal trainer MCP: nutrition, strength training, "
+    "powerlifting, strongman, recovery, and mental performance coaching."
 )
 
 _audit_path: Path | None = None
@@ -27,7 +26,7 @@ _audit_path: Path | None = None
 
 def _init_audit() -> None:
     global _audit_path
-    log_dir = Path.home() / ".robo-trainer"
+    log_dir = data_dir()
     log_dir.mkdir(parents=True, exist_ok=True)
     _audit_path = log_dir / "audit.log"
 
@@ -35,25 +34,28 @@ def _init_audit() -> None:
 def _audit(tool: str, params: dict[str, Any]) -> None:
     if _audit_path is None:
         return
-    entry = {"ts": datetime.now(timezone.utc).isoformat(), "tool": tool, "params": params}
+    entry = {"ts": datetime.now(UTC).isoformat(), "tool": tool, "params": params}
     with open(_audit_path, "a") as f:
         f.write(json.dumps(entry) + "\n")
 
 
-def main() -> None:
+def create_server() -> FastMCP:
+    """Build a server with every tool module registered."""
     _init_audit()
-    from robo_trainer.tools import nutrition, training, powerlifting, strongman, recovery, mental_health
-    modules = [nutrition, training, powerlifting, strongman, recovery, mental_health]
+    from robo_trainer.tools import mental_health, nutrition, powerlifting, recovery, strongman, training
+
+    server = FastMCP("robo-trainer", instructions=INSTRUCTIONS)
     registered: list[str] = []
-    for mod in modules:
+    for mod in (nutrition, training, powerlifting, strongman, recovery, mental_health):
         name = mod.__name__.split(".")[-1]
-        try:
-            mod.register(mcp, _audit)
-            registered.append(name)
-        except Exception as exc:
-            logger.warning("tool module %s failed to load: %s", name, exc)
-    logger.info("robo-trainer started — registered: %s", ", ".join(registered))
-    mcp.run()
+        mod.register(server, _audit)
+        registered.append(name)
+    logger.info("robo-trainer started, registered: %s", ", ".join(registered))
+    return server
+
+
+def main() -> None:
+    create_server().run()
 
 
 if __name__ == "__main__":

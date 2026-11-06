@@ -1,6 +1,6 @@
+import importlib
 import json
 import sys
-import importlib
 
 
 class _FakeMCP:

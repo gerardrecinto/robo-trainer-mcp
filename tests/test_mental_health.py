@@ -49,8 +49,8 @@ def test_stress_that_lowers_performance_is_reported_as_negative():
     stress = [2, 3, 4, 5, 6, 8]
     energy = [9, 8, 7, 6, 5, 3]
     perf = [140.0, 135.0, 130.0, 120.0, 115.0, 100.0]
-    mood = [{"date": d, "energy": e, "stress": s} for d, e, s in zip(days, energy, stress)]
-    train = [{"date": d, "top_1rm": p} for d, p in zip(days, perf)]
+    mood = [{"date": d, "energy": e, "stress": s} for d, e, s in zip(days, energy, stress, strict=True)]
+    train = [{"date": d, "top_1rm": p} for d, p in zip(days, perf, strict=True)]
     mh = _fresh(mood, train)
     mcp = _FakeMCP()
     mh.register(mcp, lambda t, p: None)

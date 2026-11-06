@@ -1,7 +1,9 @@
 services:
   robo-trainer:
     build: .
+    stdin_open: true
     volumes:
-      - ~/.robo-trainer:/root/.robo-trainer
-    environment:
-      - PYTHONUNBUFFERED=1
+      - robo-trainer-data:/data
+
+volumes:
+  robo-trainer-data:
