@@ -1,6 +1,6 @@
 [project]
 name = "robo-trainer-mcp"
-version = "1.1.0"
+version = "1.2.0"
 description = "MCP server for nutrition, strength, recovery and mood tracking"
 readme = "README.md"
 license = "MIT"
