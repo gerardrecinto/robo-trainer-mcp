@@ -118,6 +118,8 @@ jobs:
           path: _site/
       - run: npm ci
       - name: Test the website in ${{ matrix.browser }}
+        env:
+          HOME: /root   # Firefox needs a writable home folder inside the container
         run: npx playwright test --project=${{ matrix.browser }}
 
   audit:
