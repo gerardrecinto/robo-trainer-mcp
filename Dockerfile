@@ -1,10 +1,17 @@
 FROM python:3.12-slim
 
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    ROBO_TRAINER_HOME=/data
+
 WORKDIR /app
-
-COPY pyproject.toml .
+COPY pyproject.toml README.md ./
 COPY src/ src/
+RUN pip install . \
+    && useradd --create-home --uid 10001 trainer \
+    && mkdir /data \
+    && chown trainer /data
 
-RUN pip install --no-cache-dir -e .
-
+USER trainer
+VOLUME /data
 CMD ["robo-trainer-mcp"]

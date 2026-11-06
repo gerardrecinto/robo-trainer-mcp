@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Any, Callable
+from typing import Any
 
 from robo_trainer.db import get_conn, init_db
 
@@ -212,8 +213,8 @@ def register(mcp: Any, audit: Callable) -> None:
         return json.dumps({
             "exercise": exercise,
             "weeks_analyzed": len(weeks_sorted),
-            "weekly_volume_kg": dict(zip(weeks_sorted, [round(v, 1) for v in volumes])),
-            "weekly_avg_rpe": dict(zip(weeks_sorted, avg_rpes)),
+            "weekly_volume_kg": dict(zip(weeks_sorted, [round(v, 1) for v in volumes], strict=False)),
+            "weekly_avg_rpe": dict(zip(weeks_sorted, avg_rpes, strict=False)),
             "risk": risk,
             "recommendation": rec,
         }, indent=2)
@@ -271,8 +272,8 @@ def _demo_overreaching(exercise: str, weeks: int) -> dict:
     return {
         "exercise": exercise,
         "weeks_analyzed": len(week_keys),
-        "weekly_volume_kg": dict(zip(week_keys, volumes)),
-        "weekly_avg_rpe": dict(zip(week_keys, rpes)),
+        "weekly_volume_kg": dict(zip(week_keys, volumes, strict=False)),
+        "weekly_avg_rpe": dict(zip(week_keys, rpes, strict=False)),
         "risk": "elevated",
         "recommendation": "Volume and perceived effort are both climbing with no deload. Consider a deload week.",
     }

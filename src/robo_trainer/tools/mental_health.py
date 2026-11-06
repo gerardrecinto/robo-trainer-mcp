@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Any, Callable
+from typing import Any
 
 from robo_trainer.db import get_conn, init_db
 
@@ -74,7 +75,7 @@ def _pearson(x: list, y: list) -> float:
     if n < 2:
         return 0.0
     mx, my = sum(x) / n, sum(y) / n
-    num  = sum((xi - mx) * (yi - my) for xi, yi in zip(x, y))
+    num  = sum((xi - mx) * (yi - my) for xi, yi in zip(x, y, strict=True))
     denx = sum((xi - mx) ** 2 for xi in x) ** 0.5
     deny = sum((yi - my) ** 2 for yi in y) ** 0.5
     return round(num / (denx * deny), 3) if denx and deny else 0.0

@@ -1,7 +1,6 @@
-import json
+import importlib
 import sys
 import types
-import importlib
 from contextlib import contextmanager
 
 

@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-_DB_PATH = Path.home() / ".robo-trainer" / "data.db"
+
+def data_dir() -> Path:
+    """Where the database and audit log live. Set ROBO_TRAINER_HOME to move it."""
+    return Path(os.environ.get("ROBO_TRAINER_HOME") or Path.home() / ".robo-trainer")
+
+
+def db_path() -> Path:
+    return data_dir() / "data.db"
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS food_log (
@@ -82,7 +90,8 @@ CREATE TABLE IF NOT EXISTS event_log (
 """
 
 
-def init_db(path: Path = _DB_PATH) -> Path:
+def init_db(path: Path | None = None) -> Path:
+    path = path or db_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(path) as conn:
         conn.executescript(_SCHEMA)
@@ -90,8 +99,8 @@ def init_db(path: Path = _DB_PATH) -> Path:
 
 
 @contextmanager
-def get_conn(path: Path = _DB_PATH):
-    conn = sqlite3.connect(path)
+def get_conn(path: Path | None = None):
+    conn = sqlite3.connect(path or db_path())
     conn.row_factory = sqlite3.Row
     try:
         yield conn

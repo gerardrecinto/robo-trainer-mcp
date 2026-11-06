@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 # Wilks 2020 polynomial coefficients
 _WILKS_MEN = (-216.0475144, 16.2606339, -0.002388645, -0.00113732, 7.01863e-6, -1.291e-8)
@@ -76,7 +77,7 @@ def register(mcp: Any, audit: Callable) -> None:
                 "third_pr":  round(kg * 1.01 / 2.5) * 2.5,
                 "third_big": round(kg * 1.04 / 2.5) * 2.5,
             }
-        result["projected_total_kg"] = sum(result[l]["third_pr"] for l in ("squat", "bench", "deadlift"))
+        result["projected_total_kg"] = sum(result[lift]["third_pr"] for lift in ("squat", "bench", "deadlift"))
         return json.dumps(result, indent=2)
 
     @mcp.tool()
