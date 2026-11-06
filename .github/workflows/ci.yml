@@ -81,9 +81,13 @@ jobs:
           docker run --rm -i robo-trainer-mcp:ci python - < scripts/smoke_installed.py
 
   site:
-    name: Website works in Chromium, Firefox and WebKit
+    name: Website (${{ matrix.browser }})
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -94,9 +98,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium firefox webkit
-      - name: Assemble the site and test it in all three browsers
-        run: npm test
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Assemble the site and test it in ${{ matrix.browser }}
+        run: npm run assemble && npx playwright test --project=${{ matrix.browser }}
 
   audit:
     name: Dependency audit
