@@ -10,7 +10,7 @@
 
 ![Robo Trainer MCP logo](docs/assets/logo.svg)
 
-MCP server that turns Claude into a full-stack personal trainer. Nutrition coaching, strength programming, powerlifting analytics, strongman tracking, recovery monitoring, and mental performance: all from a single local server, nothing leaving your machine.
+MCP server for nutrition, strength training, powerlifting, strongman, recovery and mood data. Nutrition coaching, strength programming, powerlifting analytics, strongman tracking, recovery monitoring, and mental performance: all from a single local server, nothing leaving your machine.
 
 ![demo](docs/assets/demo.gif)
 
@@ -20,7 +20,7 @@ MCP server that turns Claude into a full-stack personal trainer. Nutrition coach
 
 Every fitness app works in isolation. Your food tracker knows your macros. Your training log knows your lifts. Your sleep tracker knows your HRV. None of them talk to each other, and none of them can tell you *why* you're stuck.
 
-robo-trainer-mcp connects everything. Claude can pull training volume, sleep trends, nutrition, and mood at once: then reason across them like a real coach.
+robo-trainer-mcp connects everything. Any MCP client can pull training volume, sleep trends, nutrition, and mood at once: then reason across them like a real coach.
 
 ---
 
@@ -31,7 +31,7 @@ robo-trainer-mcp connects everything. Claude can pull training volume, sleep tre
 ```
 You: "My squat hasn't moved in 5 weeks and I feel exhausted. What's wrong?"
 
-Claude pulls:
+The client pulls:
   training_get_volume_trend("squat", weeks=6)
   recovery_get_sleep_trend(days=42)
   nutrition_get_weekly_macros()
@@ -82,7 +82,7 @@ You: "I slept 6 hours, quality 5/10, soreness 7/10, stress 7/10."
 
 ```
                  ┌──────────────────────────────────┐
-                 │          Claude (LLM)             │
+                 │        MCP client (LLM)           │
                  │   reasons across all 24 tools     │
                  └─────────────┬────────────────────┘
                                │  MCP Protocol
@@ -180,7 +180,7 @@ robo-trainer-mcp
 docker pull ghcr.io/gerardrecinto/robo-trainer-mcp:latest
 ```
 
-Add to Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+Add to your MCP client config (for example Claude Desktop, `~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
 {

@@ -2,7 +2,7 @@
 
 ## Positioning
 
-Robo Trainer MCP gives Claude structured local access to training, nutrition, sleep, mood, and performance data so it can reason like a coach instead of answering from memory.
+Robo Trainer MCP gives MCP clients structured local access to training, nutrition, sleep, mood, and performance data so it can reason like a coach instead of answering from memory.
 
 ## Best First Customer
 
@@ -22,7 +22,7 @@ Robo Trainer MCP gives Claude structured local access to training, nutrition, sl
 ## Launch Hooks
 
 1. "Your training log knows what happened. Your coach should know why."
-2. "Claude can reason across sleep, food, mood, and training volume."
+2. "Your assistant can reason across sleep, food, mood, and training volume."
 3. "Local-first AI coaching memory for strength athletes."
 
 ## Next Assets
