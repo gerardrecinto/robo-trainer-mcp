@@ -64,7 +64,7 @@ def register(mcp: Any, audit: Callable) -> None:
         return json.dumps({
             "data_points": len(paired),
             "energy_vs_performance": {"pearson_r": energy_r, "interpretation": _interpret_r(energy_r)},
-            "stress_vs_performance": {"pearson_r": stress_r, "interpretation": _interpret_r(stress_r, inverse=True)},
+            "stress_vs_performance": {"pearson_r": stress_r, "interpretation": _interpret_r(stress_r)},
             "insight": _insight(energy_r, stress_r),
         }, indent=2)
 
@@ -80,9 +80,10 @@ def _pearson(x: list, y: list) -> float:
     return round(num / (denx * deny), 3) if denx and deny else 0.0
 
 
-def _interpret_r(r: float, inverse: bool = False) -> str:
+def _interpret_r(r: float) -> str:
+    """Describe r in words. The direction is the sign of r, so it always agrees with the number."""
     ab = abs(r)
-    direction = "negative" if (r < 0 and not inverse) or (r > 0 and inverse) else "positive"
+    direction = "negative" if r < 0 else "positive"
     if ab >= 0.7:   strength = "Strong"
     elif ab >= 0.4: strength = "Moderate"
     elif ab >= 0.2: strength = "Weak"
