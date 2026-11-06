@@ -1,0 +1,8 @@
+#!/private/tmp/claude-501/-Users-gerardlouisrecinto-Downloads-apple-interview-coding/0331e3b2-0794-4b43-a1b3-7fdc201d06fd/scratchpad/robo-trainer-mcp/.v312/bin/python3.12
+# -*- coding: utf-8 -*-
+import re
+import sys
+from coverage.cmdline import main
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.exit(main())

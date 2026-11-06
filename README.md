@@ -5,7 +5,6 @@
 ![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python&logoColor=white)
 ![MCP](https://img.shields.io/badge/MCP-Compatible-green)
 ![SQLite](https://img.shields.io/badge/Storage-SQLite%20local-lightgrey)
-![Tests](https://img.shields.io/badge/Tests-16%20passed-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 ![Robo Trainer MCP logo](docs/assets/logo.svg)
@@ -165,7 +164,7 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required.
 
 ## Quick start
 
-Not yet published to PyPI. Install from source or use the Docker image below.
+Not yet published to PyPI. Install from source or use the Docker image below. Use Python 3.12 or 3.13: on 3.14 some dependencies may have no prebuilt wheel yet, and `pip install` then needs a Rust toolchain.
 
 ```bash
 git clone https://github.com/gerardrecinto/robo-trainer-mcp
@@ -205,7 +204,7 @@ Each tool module (nutrition, training, recovery, etc.) loads independently. If a
 ```bash
 pip install -e ".[dev]"
 pytest tests/ -v
-# 16 passed
+# all tests pass
 ```
 
 ## Product Direction

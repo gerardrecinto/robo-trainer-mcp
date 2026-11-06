@@ -1,0 +1,283 @@
+# Licensed under the Apache License: http://www.apache.org/licenses/LICENSE-2.0
+# For details: https://github.com/coveragepy/coveragepy/blob/main/NOTICE.txt
+
+"""SQLite abstraction for coverage.py"""
+
+# pragma: enforce 100% coverage
+
+from __future__ import annotations
+
+import contextlib
+import os
+import pathlib
+import re
+import sqlite3
+from collections.abc import Iterable, Iterator
+from typing import Any, Never, cast
+
+from coverage.debug import auto_repr, clipped_repr, exc_one_line
+from coverage.exceptions import DataError
+from coverage.types import TDebugCtl
+
+
+def read_only_uri(filename: str) -> str:
+    """Make a URI to open `filename` read-only.
+
+    Opening a database read-write lets SQLite act on files beside it: a hot
+    `*-journal` file gets rolled back, and the "super-journal" it names gets
+    deleted. Data files we only read (combine inputs, for example) can come
+    from anywhere, so open them with `immutable=1`, which makes SQLite ignore
+    journals and locks entirely.
+
+    """
+    return pathlib.Path(os.path.abspath(filename)).as_uri() + "?mode=ro&immutable=1"
+
+
+def check_hot_journal(filename: str) -> None:
+    """Raise DataError if SQLite would roll back a journal beside `filename`.
+
+    When a database is opened read-write, SQLite rolls back a hot journal
+    beside it, then deletes the "super-journal" the journal names, which could
+    be any file at all.  Coverage.py turn journaling off, so a journal like
+    that is almost certainly not ours.  A read-only connection won't roll back,
+    but reports the hot journal instead, so probe with one of those first.
+    This lets SQLite decide where the journal is and whether it is hot.
+
+    """
+    if not os.path.exists(filename):
+        return
+    uri = pathlib.Path(os.path.abspath(filename)).as_uri() + "?mode=ro"
+    try:
+        with contextlib.closing(sqlite3.connect(uri, uri=True)) as con:
+            con.execute("select count(*) from sqlite_master").fetchall()
+    except sqlite3.Error as exc:
+        if exc.sqlite_errorcode == sqlite3.SQLITE_READONLY_ROLLBACK:
+            raise DataError(
+                f"Couldn't use data file {filename!r}: it has a journal file to roll back"
+            ) from exc
+        # Other errors will be reported by the real connection.
+
+
+class SqliteDb:
+    """A simple abstraction over a SQLite database.
+
+    Use as a context manager, then you can use it like a
+    :class:`python:sqlite3.Connection` object::
+
+        with SqliteDb(filename, debug_control) as db:
+            with db.execute("select a, b from some_table") as cur:
+                for a, b in cur:
+                    etc(a, b)
+
+    """
+
+    def __init__(
+        self,
+        filename: str,
+        debug: TDebugCtl,
+        *,
+        no_disk: bool = False,
+        read_only: bool = False,
+    ) -> None:
+        self.debug = debug
+        self.filename = filename
+        self.no_disk = no_disk
+        self.read_only = read_only
+        self.nest = 0
+        self.con: sqlite3.Connection | None = None
+
+    __repr__ = auto_repr
+
+    def _raise_data_error(self, msg: str, exc: Exception) -> Never:
+        """Raise a DataError with as much information as possible."""
+        msg += f": {exc}"
+        if hasattr(exc, "sqlite_errorname"):
+            msg += f": ({exc.sqlite_errorname})"
+        raise DataError(msg) from exc
+
+    def _connect(self) -> None:
+        """Connect to the db and do universal initialization."""
+        if self.con is not None:
+            return
+
+        # It can happen that Python switches threads while the tracer writes
+        # data. The second thread will also try to write to the data,
+        # effectively causing a nested context. However, given the idempotent
+        # nature of the tracer operations, sharing a connection among threads
+        # is not a problem.
+        if self.debug.should("sql"):
+            self.debug.write(f"Connecting to {self.filename!r}")
+        filename = self.filename
+        if not filename.startswith("file:"):
+            if self.read_only:
+                filename = read_only_uri(filename)
+            else:
+                check_hot_journal(filename)
+        try:
+            # uri=True is needed for memory and read-only URIs, and is harmless
+            # for plain file names. It also makes ATTACH honor URIs.
+            self.con = sqlite3.connect(filename, check_same_thread=False, uri=True)
+        except sqlite3.Error as exc:
+            self._raise_data_error(f"Couldn't use data file {self.filename!r}", exc)
+
+        if self.debug.should("sql"):
+            self.debug.write(f"Connected to {self.filename!r} as {self.con!r}")
+
+        self.con.create_function("REGEXP", 2, lambda txt, pat: re.search(txt, pat) is not None)
+
+        # Turning off journal_mode can speed up writing. It can't always be
+        # disabled, so we have to be prepared for *-journal files elsewhere.
+        # In Python 3.12+, we can change the config to allow journal_mode=off.
+        if hasattr(sqlite3, "SQLITE_DBCONFIG_DEFENSIVE"):
+            # Turn off defensive mode, so that journal_mode=off can succeed.
+            self.con.setconfig(  # type: ignore[attr-defined, unused-ignore]
+                sqlite3.SQLITE_DBCONFIG_DEFENSIVE,
+                False,
+            )
+
+        # This pragma makes writing faster. It disables rollbacks, but we never need them.
+        self.execute_void("pragma journal_mode=off")
+
+        # This pragma makes writing faster. It can fail in unusual situations
+        # (https://github.com/coveragepy/coveragepy/issues/1646), so use fail_ok=True
+        # to keep things going.
+        self.execute_void("pragma synchronous=off", fail_ok=True)
+
+    def close(self, force: bool = False) -> None:
+        """If needed, close the connection."""
+        if self.con is not None:
+            if force or not self.no_disk:
+                if self.debug.should("sql"):
+                    self.debug.write(f"Closing {self.con!r} on {self.filename!r}")
+                self.con.close()
+                self.con = None
+
+    def __enter__(self) -> SqliteDb:
+        if self.nest == 0:
+            self._connect()
+            assert self.con is not None
+            self.con.__enter__()
+        self.nest += 1
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:  # type: ignore[no-untyped-def]
+        self.nest -= 1
+        if self.nest == 0:
+            try:
+                assert self.con is not None
+                self.con.__exit__(exc_type, exc_value, traceback)
+                self.close()
+            except Exception as exc:
+                if self.debug.should("sql"):
+                    self.debug.write(f"EXCEPTION from __exit__: {exc_one_line(exc)}")
+                self._raise_data_error(f"Couldn't end data file {self.filename!r}", exc)
+
+    def _execute(self, sql: str, parameters: Iterable[Any]) -> sqlite3.Cursor:
+        """Same as :meth:`python:sqlite3.Connection.execute`."""
+        if self.debug.should("sql"):
+            tail = f" with {parameters!r}" if parameters else ""
+            self.debug.write(f"Executing {sql!r}{tail}")
+        try:
+            assert self.con is not None
+            try:
+                return self.con.execute(sql, parameters)  # type: ignore[arg-type]
+            except Exception:
+                # In some cases, an error might happen that isn't really an
+                # error.  Try again immediately.
+                # https://github.com/coveragepy/coveragepy/issues/1010
+                return self.con.execute(sql, parameters)  # type: ignore[arg-type]
+        except sqlite3.Error as exc:
+            if self.debug.should("sql"):
+                self.debug.write(f"EXCEPTION from execute: {exc_one_line(exc)}")
+            self._raise_data_error(f"Couldn't use data file {self.filename!r}", exc)
+
+    @contextlib.contextmanager
+    def execute(
+        self,
+        sql: str,
+        parameters: Iterable[Any] = (),
+    ) -> Iterator[sqlite3.Cursor]:
+        """Context managed :meth:`python:sqlite3.Connection.execute`.
+
+        Use with a ``with`` statement to auto-close the returned cursor.
+        """
+        cur = self._execute(sql, parameters)
+        try:
+            yield cur
+        finally:
+            cur.close()
+
+    def execute_void(self, sql: str, parameters: Iterable[Any] = (), fail_ok: bool = False) -> None:
+        """Same as :meth:`python:sqlite3.Connection.execute` when you don't need the cursor.
+
+        If `fail_ok` is True, then SQLite errors are ignored.
+        """
+        try:
+            # PyPy needs the .close() calls here, or sqlite gets twisted up:
+            # https://bitbucket.org/pypy/pypy/issues/2872/default-isolation-mode-is-different-on
+            self._execute(sql, parameters).close()
+        except DataError:
+            if not fail_ok:
+                raise
+
+    def execute_for_rowid(self, sql: str, parameters: Iterable[Any] = ()) -> int:
+        """Like execute, but returns the lastrowid."""
+        with self.execute(sql, parameters) as cur:
+            assert cur.lastrowid is not None
+            rowid: int = cur.lastrowid
+        if self.debug.should("sqldata"):
+            self.debug.write(f"Row id result: {rowid!r}")
+        return rowid
+
+    def execute_one(self, sql: str, parameters: Iterable[Any] = ()) -> tuple[Any, ...] | None:
+        """Execute a statement and return the one row that results.
+
+        This is like execute(sql, parameters).fetchone(), except it is
+        correct in reading the entire result set.  This will raise an
+        exception if more than one row results.
+
+        Returns a row, or None if there were no rows.
+        """
+        with self.execute(sql, parameters) as cur:
+            rows = list(cur)
+        if len(rows) == 0:
+            return None
+        elif len(rows) == 1:
+            return cast(tuple[Any, ...], rows[0])
+        else:
+            raise AssertionError(f"SQL {sql!r} shouldn't return {len(rows)} rows")
+
+    def _executemany(self, sql: str, data: list[Any]) -> sqlite3.Cursor:
+        """Same as :meth:`python:sqlite3.Connection.executemany`."""
+        if self.debug.should("sql"):
+            final = ":" if self.debug.should("sqldata") else ""
+            self.debug.write(f"Executing many {sql!r} with {len(data)} rows{final}")
+            if self.debug.should("sqldata"):
+                for i, row in enumerate(data):
+                    self.debug.write(f"{i:4d}: {row!r}")
+        assert self.con is not None
+        try:
+            return self.con.executemany(sql, data)
+        except Exception:
+            # In some cases, an error might happen that isn't really an
+            # error.  Try again immediately.
+            # https://github.com/coveragepy/coveragepy/issues/1010
+            return self.con.executemany(sql, data)
+
+    def executemany_void(self, sql: str, data: list[Any]) -> None:
+        """Same as :meth:`python:sqlite3.Connection.executemany` when you don't need the cursor."""
+        self._executemany(sql, data).close()
+
+    def executescript(self, script: str) -> None:
+        """Same as :meth:`python:sqlite3.Connection.executescript`."""
+        if self.debug.should("sql"):
+            self.debug.write(
+                f"Executing script with {len(script)} chars: {clipped_repr(script, 100)}"
+            )
+        assert self.con is not None
+        self.con.executescript(script).close()
+
+    def dump(self) -> str:
+        """Return a multi-line string, the SQL dump of the database."""
+        assert self.con is not None
+        return "\n".join(self.con.iterdump())
