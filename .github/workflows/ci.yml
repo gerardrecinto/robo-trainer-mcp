@@ -98,7 +98,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Install the browser (retry if the download stalls)
+        run: |
+          for attempt in 1 2 3; do
+            timeout 240 npx playwright install --with-deps ${{ matrix.browser }} && exit 0
+            echo "attempt $attempt did not finish, retrying"
+          done
+          exit 1
       - name: Assemble the site and test it in ${{ matrix.browser }}
         run: npm run assemble && npx playwright test --project=${{ matrix.browser }}
 
