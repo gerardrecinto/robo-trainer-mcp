@@ -80,38 +80,45 @@ jobs:
         run: |
           docker run --rm -i robo-trainer-mcp:ci python - < scripts/smoke_installed.py
 
+  site-build:
+    name: Assemble the website
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - run: python3 scripts/assemble_site.py _site
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: site
+          path: _site/
+          if-no-files-found: error
+
+  # The browsers and their system libraries come preinstalled in Playwright's own image, so the
+  # job never waits on a package mirror. Keep the image tag in step with @playwright/test.
   site:
     name: Website (${{ matrix.browser }})
+    needs: site-build
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+      options: --ipc=host
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          python-version: "3.12"
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: 22
-          cache: npm
+          name: site
+          path: _site/
       - run: npm ci
-      - name: Install the browser (retry if the package mirror stalls)
-        run: |
-          # Short apt timeouts so a slow mirror fails fast instead of hanging the job.
-          printf 'Acquire::Retries "5";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' | sudo tee /etc/apt/apt.conf.d/99ci-retry
-          for attempt in 1 2 3; do
-            if timeout 300 npx playwright install --with-deps ${{ matrix.browser }}; then exit 0; fi
-            echo "attempt $attempt did not finish, cleaning up and retrying"
-            sudo pkill -9 apt-get dpkg apt 2>/dev/null || true
-            sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock
-            sudo dpkg --configure -a || true
-          done
-          exit 1
-      - name: Assemble the site and test it in ${{ matrix.browser }}
-        run: npm run assemble && npx playwright test --project=${{ matrix.browser }}
+      - name: Test the website in ${{ matrix.browser }}
+        run: npx playwright test --project=${{ matrix.browser }}
 
   audit:
     name: Dependency audit
@@ -129,7 +136,7 @@ jobs:
   gate:
     name: CI gate
     if: always()
-    needs: [lint, test, package, docker, site, audit]
+    needs: [lint, test, package, docker, site-build, site, audit]
     runs-on: ubuntu-latest
     steps:
       - name: Require every job to have succeeded
