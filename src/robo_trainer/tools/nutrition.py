@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from robo_trainer.db import get_conn, init_db
+from robo_trainer.validation import check, sample
 
 
 def register(mcp: Any, audit: Callable) -> None:
@@ -44,7 +45,7 @@ def register(mcp: Any, audit: Callable) -> None:
                 })
             return json.dumps(results, indent=2)
         except Exception:
-            return json.dumps(_demo_food_search(query), indent=2)
+            return sample(_demo_food_search(query), "Could not reach Open Food Facts, so these are made-up sample values, not real foods.")
 
     @mcp.tool()
     def nutrition_log_meal(
@@ -59,6 +60,12 @@ def register(mcp: Any, audit: Callable) -> None:
     ) -> str:
         """Log a meal to your food diary."""
         audit("nutrition_log_meal", {"food_name": food_name, "grams": grams})
+        err = check(
+            grams=(grams, 0, 10000), calories=(calories, 0, 10000), protein_g=(protein_g, 0, 1000),
+            carbs_g=(carbs_g, 0, 2000), fat_g=(fat_g, 0, 1000),
+        )
+        if err:
+            return err
         d = date or datetime.now().strftime("%Y-%m-%d")
         with get_conn() as conn:
             conn.execute(
@@ -120,13 +127,43 @@ def register(mcp: Any, audit: Callable) -> None:
             {"date": d, **data.get(d, {"calories": 0, "protein_g": 0, "carbs_g": 0, "fat_g": 0})}
             for d in days
         ]
-        avg = {k: round(sum(w[k] for w in weekly) / 7, 1) for k in ("calories", "protein_g", "carbs_g", "fat_g")}
-        return json.dumps({"days": weekly, "7_day_avg": avg, "goal": dict(goal)}, indent=2)
+        logged = [w for w in weekly if w["date"] in data]
+        avg = {
+            k: round(sum(w[k] for w in logged) / len(logged), 1) if logged else 0
+            for k in ("calories", "protein_g", "carbs_g", "fat_g")
+        }
+        return json.dumps({
+            "days": weekly,
+            "days_logged": len(logged),
+            "7_day_avg": avg,
+            "note": "Averages cover only the days you logged food, so a day you skipped does not count as zero.",
+            "goal": dict(goal),
+        }, indent=2)
+
+    @mcp.tool()
+    def nutrition_estimate_targets(
+        weight_kg: float,
+        height_cm: float,
+        age: int,
+        sex: str,
+        activity: str = "moderate",
+        goal: str = "maintain",
+    ) -> str:
+        """Estimate daily calories and macros. activity: sedentary, light, moderate, very, extra. goal: lose, maintain, gain."""
+        audit("nutrition_estimate_targets", {"weight_kg": weight_kg, "goal": goal, "activity": activity})
+        err = check(weight_kg=(weight_kg, 30, 300), height_cm=(height_cm, 100, 250), age=(age, 18, 100, True))
+        if err:
+            return err
+        result = estimate_targets(weight_kg, height_cm, age, sex, activity, goal)
+        return json.dumps(result, indent=2)
 
     @mcp.tool()
     def nutrition_set_goals(calories: float, protein_g: float, carbs_g: float, fat_g: float) -> str:
         """Set your daily calorie and macro targets."""
         audit("nutrition_set_goals", {"calories": calories})
+        err = check(calories=(calories, 800, 10000), protein_g=(protein_g, 0, 600), carbs_g=(carbs_g, 0, 1500), fat_g=(fat_g, 0, 500))
+        if err:
+            return err
         with get_conn() as conn:
             conn.execute(
                 "UPDATE nutrition_goals SET calories=?, protein_g=?, carbs_g=?, fat_g=?, "
@@ -136,6 +173,63 @@ def register(mcp: Any, audit: Callable) -> None:
         return json.dumps({"updated": True, "goals": {
             "calories": calories, "protein_g": protein_g, "carbs_g": carbs_g, "fat_g": fat_g
         }})
+
+
+_ACTIVITY = {"sedentary": 1.2, "light": 1.375, "moderate": 1.55, "very": 1.725, "extra": 1.9}
+_PROTEIN_G_PER_KG = {"lose": 2.0, "maintain": 1.6, "gain": 1.8}
+
+
+def estimate_targets(weight_kg: float, height_cm: float, age: int, sex: str, activity: str, goal: str) -> dict:
+    """Mifflin-St Jeor energy estimate with evidence-based protein and fat floors.
+
+    Protein: about 1.6 g/kg supports muscle gain in most people (Morton et al., 2018). The ISSN
+    position stand gives 1.4 to 2.0 g/kg, and the high end helps keep muscle in a calorie deficit.
+    Fat stays at or above 0.6 g/kg and 25 percent of calories. Fiber is about 14 g per 1000 kcal.
+    """
+    sex_key = sex.strip().lower()
+    if sex_key not in ("m", "male", "f", "female"):
+        return {"error": "sex must be 'male' or 'female' (it is used by the Mifflin-St Jeor equation)."}
+    if activity not in _ACTIVITY:
+        return {"error": f"activity must be one of: {', '.join(_ACTIVITY)}."}
+    if goal not in _PROTEIN_G_PER_KG:
+        return {"error": "goal must be one of: lose, maintain, gain."}
+    male = sex_key in ("m", "male")
+    bmr = 10 * weight_kg + 6.25 * height_cm - 5 * age + (5 if male else -161)
+    tdee = bmr * _ACTIVITY[activity]
+    notes: list[str] = []
+    if goal == "lose":
+        # Moderate deficit: 20 percent, capped at roughly 1 percent of bodyweight lost per week.
+        max_deficit = 11.0 * weight_kg
+        deficit = min(tdee * 0.20, max_deficit)
+        calories = tdee - deficit
+        floor = 1500.0 if male else 1200.0
+        if calories < floor:
+            calories = floor
+            notes.append(f"Calories were raised to {int(floor)}, a common safe minimum without medical supervision.")
+    elif goal == "gain":
+        calories = tdee * 1.10
+    else:
+        calories = tdee
+    protein_g = _PROTEIN_G_PER_KG[goal] * weight_kg
+    fat_g = max(0.6 * weight_kg, 0.25 * calories / 9.0)
+    carbs_g = max((calories - protein_g * 4 - fat_g * 9) / 4.0, 0.0)
+    return {
+        "inputs": {"weight_kg": weight_kg, "height_cm": height_cm, "age": age, "sex": sex_key, "activity": activity, "goal": goal},
+        "bmr_kcal": round(bmr),
+        "maintenance_kcal": round(tdee),
+        "targets": {
+            "calories": round(calories),
+            "protein_g": round(protein_g),
+            "carbs_g": round(carbs_g),
+            "fat_g": round(fat_g),
+            "fiber_g": round(14 * calories / 1000),
+        },
+        "notes": notes + [
+            "These are estimates. Weigh yourself weekly, then adjust calories by about 100 to 200 if your trend is off.",
+            "Not medical advice. If you are pregnant, have a history of disordered eating, or have a medical condition, plan with a clinician.",
+        ],
+        "method": "Mifflin-St Jeor equation, activity multipliers 1.2 to 1.9, protein 1.6 to 2.0 g/kg.",
+    }
 
 
 def _demo_food_search(query: str) -> list[dict]:
