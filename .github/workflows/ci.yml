@@ -83,7 +83,7 @@ jobs:
   site:
     name: Website (${{ matrix.browser }})
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -98,11 +98,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Install the browser (retry if the download stalls)
+      - name: Install the browser (retry if the package mirror stalls)
         run: |
+          # Short apt timeouts so a slow mirror fails fast instead of hanging the job.
+          printf 'Acquire::Retries "5";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' | sudo tee /etc/apt/apt.conf.d/99ci-retry
           for attempt in 1 2 3; do
-            timeout 240 npx playwright install --with-deps ${{ matrix.browser }} && exit 0
-            echo "attempt $attempt did not finish, retrying"
+            if timeout 300 npx playwright install --with-deps ${{ matrix.browser }}; then exit 0; fi
+            echo "attempt $attempt did not finish, cleaning up and retrying"
+            sudo pkill -9 apt-get dpkg apt 2>/dev/null || true
+            sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock
+            sudo dpkg --configure -a || true
           done
           exit 1
       - name: Assemble the site and test it in ${{ matrix.browser }}
