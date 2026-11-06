@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 mcp = FastMCP(
     "robo-trainer",
-    description=(
+    instructions=(
         "Full-stack personal trainer MCP: nutrition, strength training, "
         "powerlifting, strongman, recovery, and mental performance coaching."
     ),
