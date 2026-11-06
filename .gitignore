@@ -14,3 +14,15 @@ htmlcov/
 *.db
 *.log
 .DS_Store
+
+# Local virtual environments and build output
+.v/
+.v*/
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+_site/
