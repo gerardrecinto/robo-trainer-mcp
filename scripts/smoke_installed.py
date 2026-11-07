@@ -11,7 +11,7 @@ import subprocess
 import sys
 import tempfile
 
-EXPECTED_TOOL_COUNT = 29
+EXPECTED_TOOL_COUNT = 36
 
 
 def main() -> int:

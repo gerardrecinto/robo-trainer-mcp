@@ -136,4 +136,4 @@ def test_readme_examples_show_real_tool_output(server):
     assert f"{readiness['readiness_score']}" in readme
     targets = call(server, "nutrition_estimate_targets", weight_kg=80, height_cm=180, age=30, sex="male", activity="moderate", goal="lose")
     assert f"{targets['maintenance_kcal']} kcal" in readme and f"{targets['targets']['calories']} kcal" in readme
-    assert "29 tools" in readme
+    assert "36 tools" in readme

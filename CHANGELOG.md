@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+Added
+- Planning tools: `profile_set`, `profile_get`, `exercise_search`, `plan_generate`, `plan_get_today`, `plan_adjust` and `plan_review_progress`. Plans are rule-based and local, with a small built-in exercise library. 36 tools in total.
+- Cardio and mobility sessions can appear in a plan but are not loggable with `training_log_set`, so they are left out of progress counts.
+
+Changed
+- The package description, README opening and server instructions now describe the plan generator as well as the log and calculators.
+
 ## 1.2.0
 
 Fixed

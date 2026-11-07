@@ -17,8 +17,8 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 logger = logging.getLogger(__name__)
 
 INSTRUCTIONS = (
-    "Full-stack personal trainer MCP: nutrition, strength training, "
-    "powerlifting, strongman, recovery, and mental performance coaching."
+    "Local training and nutrition log, calculators and plan generator for lifters and general fitness. "
+    "General fitness information, not medical advice."
 )
 
 _audit_path: Path | None = None
@@ -42,11 +42,11 @@ def _audit(tool: str, params: dict[str, Any]) -> None:
 def create_server() -> FastMCP:
     """Build a server with every tool module registered."""
     _init_audit()
-    from robo_trainer.tools import mental_health, nutrition, powerlifting, recovery, strongman, training
+    from robo_trainer.tools import mental_health, nutrition, planning, powerlifting, recovery, strongman, training
 
     server = FastMCP("robo-trainer", instructions=INSTRUCTIONS)
     registered: list[str] = []
-    for mod in (nutrition, training, powerlifting, strongman, recovery, mental_health):
+    for mod in (nutrition, training, powerlifting, strongman, recovery, mental_health, planning):
         name = mod.__name__.split(".")[-1]
         mod.register(server, _audit)
         registered.append(name)
