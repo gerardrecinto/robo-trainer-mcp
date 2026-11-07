@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any
 
 from robo_trainer.db import get_conn, init_db
-from robo_trainer.validation import sample
+from robo_trainer.validation import check, check_date, check_name, sample
 
 # Rough illustrative targets in kg. They are not official standards and are not sourced from a
 # specific results database. Event rules and implement weights vary a lot between contests.
@@ -35,6 +35,16 @@ def register(mcp: Any, audit: Callable) -> None:
     ) -> str:
         """Log a strongman event: weight, reps, time, or distance."""
         audit("strongman_log_event", {"event_name": event_name, "implement_weight_kg": implement_weight_kg})
+        err = (
+            check(
+                implement_weight_kg=(implement_weight_kg, 0, 2000), reps=(reps, 0, 1000, True),
+                time_seconds=(time_seconds, 0, 86400), distance_meters=(distance_meters, 0, 100000),
+            )
+            or check_name("event_name", event_name, 60)
+            or check_date(date=date)
+        )
+        if err:
+            return err
         d = date or datetime.now().strftime("%Y-%m-%d")
         key = event_name.lower().replace(" ", "_")
         with get_conn() as conn:
@@ -79,6 +89,9 @@ def register(mcp: Any, audit: Callable) -> None:
     def strongman_competition_standards(event_name: str, implement_weight_kg: float) -> str:
         """Compare a lift to rough illustrative novice, regional, national and pro targets."""
         audit("strongman_competition_standards", {"event_name": event_name, "implement_weight_kg": implement_weight_kg})
+        err = check(implement_weight_kg=(implement_weight_kg, 0.1, 2000))
+        if err:
+            return err
         key = event_name.lower().replace(" ", "_")
         standards = _STANDARDS.get(key)
         if not standards:

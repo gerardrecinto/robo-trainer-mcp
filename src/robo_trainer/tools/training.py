@@ -9,7 +9,7 @@ from robo_trainer.db import get_conn, init_db
 from robo_trainer.formulas import brzycki_1rm as _brzycki_1rm
 from robo_trainer.formulas import epley_1rm as _epley_1rm
 from robo_trainer.formulas import percent_for_reps_to_failure as _percent_for_reps_to_failure
-from robo_trainer.validation import check, sample
+from robo_trainer.validation import check, check_date, check_name, sample
 
 
 def register(mcp: Any, audit: Callable) -> None:
@@ -27,6 +27,7 @@ def register(mcp: Any, audit: Callable) -> None:
         """Log a training set with weight, reps, and optional RPE (1–10)."""
         audit("training_log_set", {"exercise": exercise, "weight_kg": weight_kg, "reps": reps})
         err = check(weight_kg=(weight_kg, 0.1, 1000), reps=(reps, 1, 100, True), rpe=(rpe, 0, 10))
+        err = err or check_name("exercise", exercise) or check_date(date=date)
         if err:
             return err
         d = date or datetime.now().strftime("%Y-%m-%d")
@@ -116,6 +117,9 @@ def register(mcp: Any, audit: Callable) -> None:
     def training_get_volume_trend(exercise: str, weeks: int = 4) -> str:
         """Weekly volume (sets × weight × reps) trend for an exercise."""
         audit("training_get_volume_trend", {"exercise": exercise, "weeks": weeks})
+        err = check(weeks=(weeks, 1, 104, True))
+        if err:
+            return err
         start = (datetime.now().date() - timedelta(weeks=weeks)).strftime("%Y-%m-%d")
         with get_conn() as conn:
             rows = conn.execute(
@@ -140,6 +144,9 @@ def register(mcp: Any, audit: Callable) -> None:
     def training_get_session_history(exercise: str, limit: int = 10) -> str:
         """Recent training sessions for a specific exercise."""
         audit("training_get_session_history", {"exercise": exercise, "limit": limit})
+        err = check(limit=(limit, 1, 100, True))
+        if err:
+            return err
         with get_conn() as conn:
             rows = conn.execute(
                 "SELECT date, set_number, weight_kg, reps, rpe FROM training_log "
@@ -167,7 +174,7 @@ def register(mcp: Any, audit: Callable) -> None:
     def training_log_bodyweight(weight_kg: float, date: str = "") -> str:
         """Log bodyweight in kg for a given date (defaults to today)."""
         audit("training_log_bodyweight", {"weight_kg": weight_kg})
-        err = check(weight_kg=(weight_kg, 20, 400))
+        err = check(weight_kg=(weight_kg, 20, 400)) or check_date(date=date)
         if err:
             return err
         d = date or datetime.now().strftime("%Y-%m-%d")
@@ -182,6 +189,9 @@ def register(mcp: Any, audit: Callable) -> None:
     def training_get_bodyweight_trend(days: int = 30) -> str:
         """Bodyweight trend over N days: daily log, net change, and average."""
         audit("training_get_bodyweight_trend", {"days": days})
+        err = check(days=(days, 1, 3650, True))
+        if err:
+            return err
         start = (datetime.now().date() - timedelta(days=days)).strftime("%Y-%m-%d")
         with get_conn() as conn:
             rows = conn.execute(
@@ -203,6 +213,9 @@ def register(mcp: Any, audit: Callable) -> None:
     def training_check_overreaching(exercise: str, weeks: int = 4) -> str:
         """Flag overreaching risk for an exercise: rising volume plus rising RPE with no deload."""
         audit("training_check_overreaching", {"exercise": exercise, "weeks": weeks})
+        err = check(weeks=(weeks, 1, 104, True))
+        if err:
+            return err
         start = (datetime.now().date() - timedelta(weeks=weeks)).strftime("%Y-%m-%d")
         with get_conn() as conn:
             rows = conn.execute(

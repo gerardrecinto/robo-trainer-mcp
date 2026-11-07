@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from robo_trainer.db import get_conn, init_db
-from robo_trainer.validation import check, sample
+from robo_trainer.validation import check, check_date, sample
 
 
 def _readiness_score(sleep_hours: float, sleep_quality: int, soreness: int, stress: int) -> float:
@@ -30,6 +30,7 @@ def register(mcp: Any, audit: Callable) -> None:
         """Log sleep: hours slept, quality (1–10), optional HRV in ms."""
         audit("recovery_log_sleep", {"hours": hours, "quality": quality})
         err = check(hours=(hours, 0, 24), quality=(quality, 1, 10, True), hrv_ms=(hrv_ms, 0, 300))
+        err = err or check_date(date=date)
         if err:
             return err
         d = date or datetime.now().strftime("%Y-%m-%d")
@@ -44,6 +45,9 @@ def register(mcp: Any, audit: Callable) -> None:
     def recovery_get_sleep_trend(days: int = 14) -> str:
         """Sleep metrics trend over N days."""
         audit("recovery_get_sleep_trend", {"days": days})
+        err = check(days=(days, 1, 3650, True))
+        if err:
+            return err
         start = (datetime.now().date() - timedelta(days=days)).strftime("%Y-%m-%d")
         with get_conn() as conn:
             rows = conn.execute(

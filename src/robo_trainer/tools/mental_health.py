@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from robo_trainer.db import get_conn, init_db
-from robo_trainer.validation import check, sample
+from robo_trainer.validation import check, check_date, sample
 
 
 def register(mcp: Any, audit: Callable) -> None:
@@ -17,6 +17,7 @@ def register(mcp: Any, audit: Callable) -> None:
         """Log mood, energy, and stress (1–10 each). 10 = best/highest."""
         audit("mental_log_mood", {"mood": mood, "energy": energy, "stress": stress})
         err = check(mood=(mood, 1, 10, True), energy=(energy, 1, 10, True), stress=(stress, 1, 10, True))
+        err = err or check_date(date=date)
         if err:
             return err
         d = date or datetime.now().strftime("%Y-%m-%d")
@@ -31,6 +32,9 @@ def register(mcp: Any, audit: Callable) -> None:
     def mental_get_mood_trend(days: int = 14) -> str:
         """Rolling mood, energy, and stress averages over N days."""
         audit("mental_get_mood_trend", {"days": days})
+        err = check(days=(days, 1, 3650, True))
+        if err:
+            return err
         start = (datetime.now().date() - timedelta(days=days)).strftime("%Y-%m-%d")
         with get_conn() as conn:
             rows = conn.execute(
