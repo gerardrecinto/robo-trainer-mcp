@@ -42,5 +42,6 @@ def test_server_starts_and_answers_over_stdio(tmp_path):
     init, tools, call = run_stdio_session([sys.executable, "-m", "robo_trainer.server"], env)
     assert init["result"]["serverInfo"]["name"] == "robo-trainer"
     assert {t["name"] for t in tools["result"]["tools"]} == EXPECTED_TOOLS
+    assert len(tools["result"]["tools"]) == 36
     payload = json.loads(call["result"]["content"][0]["text"])
     assert payload["estimated_1rm_kg"] == 116.7

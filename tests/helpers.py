@@ -15,6 +15,8 @@ EXPECTED_TOOLS = {
     "training_calculate_1rm", "training_check_overreaching", "training_get_bodyweight_trend",
     "training_get_prs", "training_get_session_history", "training_get_volume_trend",
     "training_log_bodyweight", "training_log_set", "training_estimate_1rm_from_rpe",
+    "profile_set", "profile_get", "exercise_search", "plan_generate", "plan_get_today",
+    "plan_adjust", "plan_review_progress",
 }
 
 

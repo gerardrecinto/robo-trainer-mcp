@@ -87,6 +87,18 @@ CREATE TABLE IF NOT EXISTS event_log (
     notes               TEXT,
     created_at          TEXT DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS user_profile (
+    id          INTEGER PRIMARY KEY CHECK (id = 1),
+    data        TEXT NOT NULL,
+    updated_at  TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS training_plan (
+    id          INTEGER PRIMARY KEY CHECK (id = 1),
+    data        TEXT NOT NULL,
+    updated_at  TEXT DEFAULT (datetime('now'))
+);
 """
 
 
