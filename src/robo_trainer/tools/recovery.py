@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from robo_trainer.db import get_conn, init_db
-from robo_trainer.validation import check, check_date, sample
+from robo_trainer.validation import check, check_date, check_note, sample
 
 
 def _readiness_score(sleep_hours: float, sleep_quality: int, soreness: int, stress: int) -> float:
@@ -30,7 +30,7 @@ def register(mcp: Any, audit: Callable) -> None:
         """Log sleep: hours slept, quality (1–10), optional HRV in ms."""
         audit("recovery_log_sleep", {"hours": hours, "quality": quality})
         err = check(hours=(hours, 0, 24), quality=(quality, 1, 10, True), hrv_ms=(hrv_ms, 0, 300))
-        err = err or check_date(date=date)
+        err = err or check_date(date=date) or check_note(notes)
         if err:
             return err
         d = date or datetime.now().strftime("%Y-%m-%d")

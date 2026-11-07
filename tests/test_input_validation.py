@@ -83,3 +83,14 @@ def test_data_folder_database_and_audit_log_are_owner_only(server, tmp_path):
     assert stat.S_IMODE(tmp_path.stat().st_mode) == 0o700
     assert stat.S_IMODE((tmp_path / "data.db").stat().st_mode) == 0o600
     assert stat.S_IMODE((tmp_path / "audit.log").stat().st_mode) == 0o600
+
+
+@pytest.mark.parametrize("tool,args", [
+    ("training_log_set", {"exercise": "squat", "weight_kg": 100, "reps": 5}),
+    ("recovery_log_sleep", {"hours": 7, "quality": 7}),
+    ("mental_log_mood", {"mood": 5, "energy": 5, "stress": 5}),
+    ("strongman_log_event", {"event_name": "yoke", "implement_weight_kg": 200}),
+])
+def test_notes_over_1000_characters_are_rejected(server, tool, args):
+    assert "notes" in call(server, tool, notes="n" * 1001, **args)["error"]
+    assert "error" not in call(server, tool, notes="n" * 1000, **args)
