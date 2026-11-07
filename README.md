@@ -175,7 +175,7 @@ Empty-database results are labelled `sample_data: true` so made-up demo values a
              └───────────────┘
 ```
 
-All personal data stays in `~/.robo-trainer/data.db`. No account required. Every tool call is also written to a local audit log in the same folder.
+All personal data stays in `~/.robo-trainer/data.db`. No account required. Every tool call is also written to a local audit log in the same folder. The log records the tool name and its parameters, so it can contain what you typed into a tool. At 5 MB it moves to `audit.log.1`, replacing the previous one, so it holds at most about 10 MB. Set `ROBO_TRAINER_AUDIT_MAX_BYTES` to change the limit.
 
 ---
 

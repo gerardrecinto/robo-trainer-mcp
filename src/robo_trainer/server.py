@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,8 @@ INSTRUCTIONS = (
     "General fitness information, not medical advice."
 )
 
+AUDIT_MAX_BYTES = 5_000_000
+
 _audit_path: Path | None = None
 
 
@@ -38,8 +41,20 @@ def _audit(tool: str, params: dict[str, Any]) -> None:
     if _audit_path is None:
         return
     entry = {"ts": datetime.now(UTC).isoformat(), "tool": tool, "params": params}
+    _rotate_audit(_audit_path)
     with open(_audit_path, "a") as f:
         f.write(json.dumps(entry) + "\n")
+    make_private(_audit_path)
+
+
+def _rotate_audit(path: Path) -> None:
+    """Keep one previous log so the file cannot grow without limit."""
+    try:
+        limit = int(os.environ.get("ROBO_TRAINER_AUDIT_MAX_BYTES", AUDIT_MAX_BYTES))
+        if limit > 0 and path.stat().st_size >= limit:
+            os.replace(path, path.with_name(path.name + ".1"))
+    except (OSError, ValueError):
+        logger.warning("could not rotate the audit log", exc_info=True)
 
 
 def create_server() -> FastMCP:
