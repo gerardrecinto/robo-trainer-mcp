@@ -41,10 +41,10 @@ test('daily target calculator matches the hand-computed numbers and rejects bad 
   await expect(page.locator('#res2')).toContainText('age 18 to 100');
 });
 
-test('tool list shows all 29 tools and filters by area', async ({ page }) => {
+test('tool list shows all 36 tools and filters by area', async ({ page }) => {
   await openReady(page);
-  await expect(page.locator('#n-tools')).toHaveText('29');
-  await expect(page.locator('#grid .t')).toHaveCount(29);
+  await expect(page.locator('#n-tools')).toHaveText('36');
+  await expect(page.locator('#grid .t')).toHaveCount(36);
   await page.fill('#q', 'pl_calculate_dots');
   await expect(page.locator('#grid .t')).toHaveCount(1);
 });

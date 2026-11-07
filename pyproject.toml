@@ -1,7 +1,7 @@
 [project]
 name = "robo-trainer-mcp"
 version = "1.2.0"
-description = "MCP server for nutrition, strength, recovery and mood tracking"
+description = "Local training and nutrition log, calculators and plan generator for lifters and general fitness"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]

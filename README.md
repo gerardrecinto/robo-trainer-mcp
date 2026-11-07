@@ -9,7 +9,7 @@
 
 ![Robo Trainer MCP logo](docs/assets/logo.svg)
 
-**One local server that lets your AI assistant see your whole training picture:** food, lifts, sleep, recovery and mood in one place, so it can answer "why did my squat stall?" from your own data. It is for lifters and coaches who already use an MCP client such as Claude Desktop. Nothing leaves your machine except food search.
+**A local training and nutrition log, calculators and plan generator for lifters and general fitness.** It keeps food, lifts, sleep, recovery and mood in one place so your AI assistant can answer "why did my squat stall?" from your own data, and it can build and adjust a rule-based program from your goals, equipment and schedule. It is for people who already use an MCP client such as Claude Desktop. Nothing leaves your machine except food search.
 
 **Try the calculators in your browser, no install:** https://gerardrecinto.github.io/robo-trainer-mcp/
 
@@ -96,6 +96,34 @@ You: "I slept 6 hours, quality 5/10, soreness 7/10, stress 7/10."
   Recommendation: light technique session or active recovery.
 ```
 
+### Plan a program (real output)
+
+```
+You: "Plan 4 weeks for me. Hypertrophy, intermediate, 3 days a week, 45 minutes,
+      dumbbells, a bench and a pull-up bar."
+
+  profile_set(goals=["hypertrophy"], experience="intermediate",
+              equipment=["dumbbells", "bench", "pull_up_bar"],
+              days_per_week=3, session_minutes=45)
+  plan_generate(weeks=4, start_date="2026-11-09")
+
+  Split full_body: full_a Mon, full_b Wed, full_c Fri, about 44 min each
+  Week 1 (build), Mon 2026-11-09, full_a, about 44 min
+    Goblet Squat: 4 x 6 reps (range 6-10), RPE 7.0
+    Dumbbell Bench Press: 4 x 6 reps (range 6-10), RPE 7.0
+    Inverted Row: 4 x 6 reps (range 6-10), RPE 7.0
+    Dumbbell Romanian Deadlift: 4 x 6 reps (range 6-10), RPE 7.0
+    Side Plank: 2 x 30 s hold (range 30-60)
+  Week 4 (deload), Mon 2026-11-30, full_a, about 24 min
+    Goblet Squat: 2 x 6 reps (range 6-10), RPE 5.5
+    Dumbbell Bench Press: 2 x 6 reps (range 6-10), RPE 5.5
+    Inverted Row: 2 x 6 reps (range 6-10), RPE 5.5
+    Dumbbell Romanian Deadlift: 2 x 6 reps (range 6-10), RPE 5.5
+    Side Plank: 1 x 30 s hold (range 30-60)
+```
+
+The plan also returns the rules it used, so you can check them. Weeks 2 and 3 add a rep and half an RPE point each. `plan_adjust` rebuilds the plan for low readiness, missed days, a new equipment list or a limitation, and returns a diff.
+
 ### Daily targets from your body and goal (real output)
 
 ```
@@ -119,6 +147,7 @@ Every formula is a published one, applied to what you enter. They are estimates,
 | Protein | 1.6 g per kg to gain or maintain, 2.0 g per kg while cutting | Based on Morton et al. 2018 and the ISSN position stand (1.4 to 2.0 g per kg) |
 | Sleep | Adults need at least 7 hours (AASM and SRS consensus) | The readiness score is a hand-weighted heuristic, not a validated test |
 | Powerlifting scores | DOTS, and the original 1994 Wilks formula | The 2020 Wilks revision is not included. The bands (Beginner to Elite) are rough |
+| Training plans | Fixed rules: a split from days per week and goal, sessions fitted to your minutes, one extra rep and half an RPE point per build week, a deload every 4th week | A starting template from a small built-in exercise library, not a coach. The limitation filter only removes exercises tagged for that limitation. Ask a qualified professional about any injury or health condition |
 | Strongman targets, lift ratios | Rough illustrative numbers | Not official standards |
 
 Empty-database results are labelled `sample_data: true` so made-up demo values are never mistaken for yours. Bad input (negative weights, zero reps, RPE above 10) returns a clear error instead of a wrong answer.
@@ -130,7 +159,7 @@ Empty-database results are labelled `sample_data: true` so made-up demo values a
 ```
                  ┌──────────────────────────────────┐
                  │        MCP client (LLM)           │
-                 │   reasons across all 29 tools     │
+                 │   reasons across all 36 tools     │
                  └─────────────┬────────────────────┘
                                │  MCP Protocol (stdio)
                  ┌─────────────▼────────────────────┐
@@ -150,7 +179,7 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required. Every
 
 ---
 
-## Tools: 29 total
+## Tools: 36 total
 
 ### Nutrition
 | Tool | Description |
@@ -198,6 +227,19 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required. Every
 | `recovery_get_sleep_trend` | Sleep metrics over N days |
 | `recovery_calculate_readiness` | 0–100 readiness from 4 inputs |
 
+### Planning
+| Tool | Description |
+|---|---|
+| `profile_set` | Save goals, experience, equipment, days per week, session minutes and limitation tags |
+| `profile_get` | Read the profile, or list the fields still missing |
+| `exercise_search` | Search the built-in library by muscle, equipment and limitation tags to leave out |
+| `plan_generate` | Build a multi-week program with sets, reps, RPE, a deload week and the rules used |
+| `plan_get_today` | The planned session for a date, or a rest day |
+| `plan_adjust` | Revise the plan for low readiness, missed days, an equipment change or a limitation, with a diff |
+| `plan_review_progress` | Planned versus logged sets over the last N weeks, with sleep, stress and overreaching context |
+
+Cardio and mobility sessions appear in plans, but `training_log_set` only records weight and reps, so those sessions cannot be logged and `plan_review_progress` leaves them out of its counts.
+
 ### Mental Performance
 | Tool | Description |
 |---|---|
@@ -220,7 +262,7 @@ pytest                      # unit, integration and stdio end-to-end tests
 npm ci && npm test          # website tests in Chromium, Firefox and WebKit
 ```
 
-The tests run the real server against a real SQLite file, and start it as a subprocess to speak MCP over stdio. A golden list pins all 29 tool names. Several tests check formulas against values worked out by hand or from a published example.
+The tests run the real server against a real SQLite file, and start it as a subprocess to speak MCP over stdio. A golden list pins all 36 tool names. Several tests check formulas against values worked out by hand or from a published example.
 
 | Stage | Trigger | What runs |
 |---|---|---|
