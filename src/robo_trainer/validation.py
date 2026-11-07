@@ -50,6 +50,13 @@ def check_name(name: str, value: str, max_length: int = 80) -> str | None:
     return None
 
 
+def check_note(value: str, max_length: int = 1000) -> str | None:
+    """Validate an optional free-text note so one call cannot store megabytes."""
+    if isinstance(value, str) and len(value) > max_length:
+        return _error(f"notes must be {max_length} characters or fewer.")
+    return None
+
+
 def _error(message: str) -> str:
     return json.dumps({"error": message})
 

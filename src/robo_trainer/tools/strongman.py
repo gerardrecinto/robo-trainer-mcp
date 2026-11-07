@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any
 
 from robo_trainer.db import get_conn, init_db
-from robo_trainer.validation import check, check_date, check_name, sample
+from robo_trainer.validation import check, check_date, check_name, check_note, sample
 
 # Rough illustrative targets in kg. They are not official standards and are not sourced from a
 # specific results database. Event rules and implement weights vary a lot between contests.
@@ -42,6 +42,7 @@ def register(mcp: Any, audit: Callable) -> None:
             )
             or check_name("event_name", event_name, 60)
             or check_date(date=date)
+            or check_note(notes)
         )
         if err:
             return err

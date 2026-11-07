@@ -9,7 +9,7 @@ from robo_trainer.db import get_conn, init_db
 from robo_trainer.formulas import brzycki_1rm as _brzycki_1rm
 from robo_trainer.formulas import epley_1rm as _epley_1rm
 from robo_trainer.formulas import percent_for_reps_to_failure as _percent_for_reps_to_failure
-from robo_trainer.validation import check, check_date, check_name, sample
+from robo_trainer.validation import check, check_date, check_name, check_note, sample
 
 
 def register(mcp: Any, audit: Callable) -> None:
@@ -27,7 +27,7 @@ def register(mcp: Any, audit: Callable) -> None:
         """Log a training set with weight, reps, and optional RPE (1–10)."""
         audit("training_log_set", {"exercise": exercise, "weight_kg": weight_kg, "reps": reps})
         err = check(weight_kg=(weight_kg, 0.1, 1000), reps=(reps, 1, 100, True), rpe=(rpe, 0, 10))
-        err = err or check_name("exercise", exercise) or check_date(date=date)
+        err = err or check_name("exercise", exercise) or check_date(date=date) or check_note(notes)
         if err:
             return err
         d = date or datetime.now().strftime("%Y-%m-%d")
