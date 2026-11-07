@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3.0 - 2026-11-07
 
 Added
 - Planning tools: `profile_set`, `profile_get`, `exercise_search`, `plan_generate`, `plan_get_today`, `plan_adjust` and `plan_review_progress`. Plans are rule-based and local, with a small built-in exercise library. 36 tools in total.

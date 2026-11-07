@@ -1,6 +1,6 @@
 [project]
 name = "robo-trainer-mcp"
-version = "1.2.0"
+version = "1.3.0"
 description = "Local training and nutrition log, calculators and plan generator for lifters and general fitness"
 readme = "README.md"
 license = "MIT"
