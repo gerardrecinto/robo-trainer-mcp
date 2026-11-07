@@ -9,7 +9,7 @@ from typing import Any
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
-from robo_trainer.db import data_dir
+from robo_trainer.db import data_dir, make_private
 
 load_dotenv()
 
@@ -29,6 +29,9 @@ def _init_audit() -> None:
     log_dir = data_dir()
     log_dir.mkdir(parents=True, exist_ok=True)
     _audit_path = log_dir / "audit.log"
+    _audit_path.touch(exist_ok=True)
+    make_private(log_dir)
+    make_private(_audit_path)
 
 
 def _audit(tool: str, params: dict[str, Any]) -> None:

@@ -7,7 +7,7 @@ from typing import Any
 
 from robo_trainer.db import get_conn, init_db
 from robo_trainer.formulas import estimate_targets
-from robo_trainer.validation import check, sample
+from robo_trainer.validation import check, check_date, check_name, sample
 
 
 def register(mcp: Any, audit: Callable) -> None:
@@ -17,6 +17,9 @@ def register(mcp: Any, audit: Callable) -> None:
     def nutrition_search_food(query: str, limit: int = 5) -> str:
         """Search Open Food Facts (3M+ products) for nutrition info."""
         audit("nutrition_search_food", {"query": query})
+        err = check(limit=(limit, 1, 50, True)) or check_name("query", query, 200)
+        if err:
+            return err
         try:
             import requests
             resp = requests.get(
@@ -65,6 +68,7 @@ def register(mcp: Any, audit: Callable) -> None:
             grams=(grams, 0, 10000), calories=(calories, 0, 10000), protein_g=(protein_g, 0, 1000),
             carbs_g=(carbs_g, 0, 2000), fat_g=(fat_g, 0, 1000),
         )
+        err = err or check_name("food_name", food_name, 200) or check_date(date=date)
         if err:
             return err
         d = date or datetime.now().strftime("%Y-%m-%d")
@@ -80,6 +84,9 @@ def register(mcp: Any, audit: Callable) -> None:
     def nutrition_get_daily_summary(date: str = "") -> str:
         """Get macro totals for a day vs. your goals."""
         audit("nutrition_get_daily_summary", {"date": date})
+        err = check_date(date=date)
+        if err:
+            return err
         d = date or datetime.now().strftime("%Y-%m-%d")
         with get_conn() as conn:
             row = conn.execute(

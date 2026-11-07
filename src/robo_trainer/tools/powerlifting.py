@@ -111,6 +111,9 @@ def register(mcp: Any, audit: Callable) -> None:
     def pl_analyze_sbd_ratio(squat_kg: float, bench_kg: float, deadlift_kg: float) -> str:
         """Identify weakest lift vs. elite squat:bench:deadlift proportions (raw)."""
         audit("pl_analyze_sbd_ratio", {"squat_kg": squat_kg, "bench_kg": bench_kg, "deadlift_kg": deadlift_kg})
+        err = check(squat_kg=(squat_kg, 0, 700), bench_kg=(bench_kg, 0, 500), deadlift_kg=(deadlift_kg, 0, 600))
+        if err:
+            return err
         total = squat_kg + bench_kg + deadlift_kg
         if total <= 0:
             return json.dumps({"error": "squat_kg + bench_kg + deadlift_kg must be greater than 0."})

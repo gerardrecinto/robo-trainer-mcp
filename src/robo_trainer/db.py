@@ -102,11 +102,21 @@ CREATE TABLE IF NOT EXISTS training_plan (
 """
 
 
+def make_private(path: Path) -> None:
+    """Limit a data file or folder to the owner, because it holds health and training records."""
+    try:
+        path.chmod(0o700 if path.is_dir() else 0o600)
+    except OSError:
+        pass
+
+
 def init_db(path: Path | None = None) -> Path:
     path = path or db_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(path) as conn:
         conn.executescript(_SCHEMA)
+    make_private(path.parent)
+    make_private(path)
     return path
 
 
