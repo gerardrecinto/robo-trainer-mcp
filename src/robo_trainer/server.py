@@ -9,6 +9,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+from mcp.types import TextContent
 
 from robo_trainer.db import data_dir, make_private
 
@@ -57,12 +58,31 @@ def _rotate_audit(path: Path) -> None:
         logger.warning("could not rotate the audit log", exc_info=True)
 
 
+def _numeric(schema: dict[str, Any]) -> bool:
+    """True when a parameter schema accepts a number and does not accept a boolean."""
+    kinds = {schema.get("type")} | {opt.get("type") for opt in schema.get("anyOf", [])}
+    return bool(kinds & {"integer", "number"}) and "boolean" not in kinds
+
+
+class TrainerServer(FastMCP):
+    """FastMCP that refuses true/false for number parameters instead of reading them as 1 and 0."""
+
+    async def call_tool(self, name: str, arguments: dict[str, Any], *args: Any, **kwargs: Any) -> Any:
+        tool = self._tool_manager.get_tool(name)
+        if tool is not None:
+            props = tool.parameters.get("properties", {})
+            for key, value in arguments.items():
+                if isinstance(value, bool) and _numeric(props.get(key, {})):
+                    return [TextContent(type="text", text=json.dumps({"error": f"{key} must be a number."}))]
+        return await super().call_tool(name, arguments, *args, **kwargs)
+
+
 def create_server() -> FastMCP:
     """Build a server with every tool module registered."""
     _init_audit()
     from robo_trainer.tools import mental_health, nutrition, planning, powerlifting, recovery, strongman, training
 
-    server = FastMCP("robo-trainer", instructions=INSTRUCTIONS)
+    server = TrainerServer("robo-trainer", instructions=INSTRUCTIONS)
     registered: list[str] = []
     for mod in (nutrition, training, powerlifting, strongman, recovery, mental_health, planning):
         name = mod.__name__.split(".")[-1]
