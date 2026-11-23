@@ -73,7 +73,8 @@ class TrainerServer(FastMCP):
             props = tool.parameters.get("properties", {})
             for key, value in arguments.items():
                 if isinstance(value, bool) and _numeric(props.get(key, {})):
-                    return [TextContent(type="text", text=json.dumps({"error": f"{key} must be a number."}))]
+                    text = json.dumps({"error": f"{key} must be a number."})
+                    return [TextContent(type="text", text=text)], {"result": text}
         return await super().call_tool(name, arguments, *args, **kwargs)
 
 

@@ -45,3 +45,26 @@ def test_server_starts_and_answers_over_stdio(tmp_path):
     assert len(tools["result"]["tools"]) == 36
     payload = json.loads(call["result"]["content"][0]["text"])
     assert payload["estimated_1rm_kg"] == 116.7
+
+
+def test_true_for_a_number_is_an_ordinary_error_over_stdio(tmp_path):
+    env = {**os.environ, "ROBO_TRAINER_HOME": str(tmp_path)}
+    proc = subprocess.Popen(
+        [sys.executable, "-m", "robo_trainer.server"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL, text=True, env=env,
+    )
+    try:
+        _rpc(proc, {
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "e2e", "version": "0"}},
+        })
+        _rpc(proc, {"jsonrpc": "2.0", "method": "notifications/initialized"})
+        reply = _rpc(proc, {
+            "jsonrpc": "2.0", "id": 2, "method": "tools/call",
+            "params": {"name": "training_log_set", "arguments": {"exercise": "squat", "weight_kg": 100, "reps": True}},
+        })
+    finally:
+        proc.kill()
+        proc.wait(timeout=60)
+    assert not reply["result"].get("isError")
+    assert json.loads(reply["result"]["content"][0]["text"]) == {"error": "reps must be a number."}
