@@ -94,3 +94,19 @@ def test_data_folder_database_and_audit_log_are_owner_only(server, tmp_path):
 def test_notes_over_1000_characters_are_rejected(server, tool, args):
     assert "notes" in call(server, tool, notes="n" * 1001, **args)["error"]
     assert "error" not in call(server, tool, notes="n" * 1000, **args)
+
+
+@pytest.mark.parametrize("tool,args,field", [
+    ("training_log_set", {"exercise": "squat", "weight_kg": 100, "reps": True}, "reps"),
+    ("training_log_set", {"exercise": "squat", "weight_kg": True, "reps": 5}, "weight_kg"),
+    ("training_log_bodyweight", {"weight_kg": True}, "weight_kg"),
+    ("profile_set", {"days_per_week": True}, "days_per_week"),
+    ("plan_generate", {"weeks": True}, "weeks"),
+])
+def test_true_is_not_accepted_as_a_number(server, tool, args, field):
+    assert call(server, tool, **args) == {"error": f"{field} must be a number."}
+
+
+def test_a_rejected_boolean_stores_nothing(server):
+    call(server, "profile_set", days_per_week=True)
+    assert call(server, "profile_get")["profile"].get("days_per_week") is None
