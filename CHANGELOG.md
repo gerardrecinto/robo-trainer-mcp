@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+Added
+- `robo-trainer-mcp export [FILE]` writes every table in the local database to one JSON file with row counts, so your data is not locked in. The file is created private (mode 600), the database is opened read-only, and an existing file is not replaced without `--force`. There is no import command yet.
+
 ## 1.3.0 - 2026-11-07
 
 Added

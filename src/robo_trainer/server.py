@@ -94,6 +94,12 @@ def create_server() -> FastMCP:
 
 
 def main() -> None:
+    import sys
+
+    if sys.argv[1:2] == ["export"]:
+        from .export import main as export_main
+
+        sys.exit(export_main(sys.argv[2:]))
     create_server().run()
 
 

@@ -38,6 +38,8 @@ No uv? Use pip instead: `pip install git+https://github.com/gerardrecinto/robo-t
 
 Your data lives in `~/.robo-trainer`. Set `ROBO_TRAINER_HOME` to put it somewhere else.
 
+To take your data with you, run `robo-trainer-mcp export` (or `robo-trainer-mcp export my-data.json`). It writes every table to one JSON file with row counts, readable by any tool, with permissions limited to you. It opens the database read-only, so it cannot change your log, and it will not overwrite a file unless you pass `--force`. There is no import command yet.
+
 ![demo](docs/assets/demo.gif)
 
 ---
