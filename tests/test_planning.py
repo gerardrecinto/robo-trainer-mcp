@@ -506,3 +506,27 @@ def test_readme_plan_example_matches_real_output(server):
             assert line in readme, line
     assert "about 44 min each" in readme and all(s["est_minutes"] == 44 for s in plan["schedule"][0]["sessions"])
     assert [s["weekday"] for s in plan["schedule"][0]["sessions"]] == ["Mon", "Wed", "Fri"]
+
+
+def test_extra_sets_of_one_exercise_do_not_complete_other_exercises(planned, server):
+    session = sessions(planned)[0]
+    lifts = [e for e in session["exercises"] if e["unit"] == "reps"]
+    planned_sets = sum(e["sets"] for e in lifts)
+    for _ in range(planned_sets + 2):
+        call(server, "training_log_set", exercise=lifts[0]["exercise"], weight_kg=50, reps=8,
+             date=session["date"])
+    out = call(server, "plan_review_progress", weeks=1, as_of=session["date"])
+    reviewed = out["sessions"][0]
+    assert reviewed["status"] == "partial"
+    assert reviewed["logged_sets"] == planned_sets + 2
+    assert reviewed["completed_sets"] == lifts[0]["sets"]
+    assert out["totals"]["set_completion_pct"] == round(100 * lifts[0]["sets"] / planned_sets, 1)
+    assert reviewed["exercises"][0]["remaining_sets"] == 0
+    assert all(e["remaining_sets"] == e["planned_sets"] for e in reviewed["exercises"][1:])
+    for exercise in lifts[1:]:
+        for _ in range(exercise["sets"]):
+            call(server, "training_log_set", exercise=exercise["exercise"].lower().replace(" ", "_"),
+                 weight_kg=50, reps=8, date=session["date"])
+    finished = call(server, "plan_review_progress", weeks=1, as_of=session["date"])
+    assert finished["sessions"][0]["status"] == "done"
+    assert finished["totals"]["set_completion_pct"] == 100.0
