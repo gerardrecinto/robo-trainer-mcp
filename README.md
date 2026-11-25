@@ -126,6 +126,8 @@ You: "Plan 4 weeks for me. Hypertrophy, intermediate, 3 days a week, 45 minutes,
 
 The plan also returns the rules it used, so you can check them. Weeks 2 and 3 add a rep and half an RPE point each. `plan_adjust` rebuilds the plan for low readiness, missed days, a new equipment list or a limitation, and returns a diff.
 
+`plan_review_progress` shows remaining sets for each exercise. Extra sets of one exercise do not count toward another, and a session is complete only when every planned rep-based exercise has enough logged sets. Timed cardio and mobility remain outside these completion counts.
+
 ### Daily targets from your body and goal (real output)
 
 ```
@@ -238,7 +240,7 @@ All personal data stays in `~/.robo-trainer/data.db`. No account required. Every
 | `plan_generate` | Build a multi-week program with sets, reps, RPE, a deload week and the rules used |
 | `plan_get_today` | The planned session for a date, or a rest day |
 | `plan_adjust` | Revise the plan for low readiness, missed days, an equipment change or a limitation, with a diff |
-| `plan_review_progress` | Planned versus logged sets over the last N weeks, with sleep, stress and overreaching context |
+| `plan_review_progress` | Planned versus logged sets by exercise over the last N weeks, remaining sets, sleep, stress and overreaching context |
 
 Cardio and mobility sessions appear in plans, but `training_log_set` only records weight and reps, so those sessions cannot be logged and `plan_review_progress` leaves them out of its counts.
 

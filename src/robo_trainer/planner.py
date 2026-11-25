@@ -542,15 +542,26 @@ def review(plan: dict, rows: list[dict], as_of: date, weeks: int) -> dict:
         matched = [r for r in day_rows if _norm(r["exercise"]) in wanted]
         planned = sum(e["sets"] for e in lifts)
         logged = len(matched)
-        status = "done" if logged >= planned else "partial" if logged else "different_work" if day_rows else "missed"
+        logged_by_exercise = Counter(_norm(r["exercise"]) for r in matched)
+        exercise_progress = [
+            {
+                "exercise": e["exercise"], "planned_sets": e["sets"],
+                "logged_sets": logged_by_exercise[_norm(e["exercise"])],
+                "remaining_sets": max(0, e["sets"] - logged_by_exercise[_norm(e["exercise"])]),
+            }
+            for e in lifts
+        ]
+        completed = sum(e["planned_sets"] - e["remaining_sets"] for e in exercise_progress)
+        status = "done" if completed == planned else "partial" if logged else "different_work" if day_rows else "missed"
         counts[status] += 1
         planned_total += planned
-        logged_total += min(logged, planned)
+        logged_total += completed
         planned_rpes += [e["rpe"] for e in lifts if e["rpe"] is not None for _ in range(e["sets"])]
         logged_rpes += [r["rpe"] for r in matched if r["rpe"]]
         sessions.append({
             "date": s["date"], "week": w["week"], "session": s["name"], "phase": w["phase"], "status": status,
-            "planned_sets": planned, "logged_sets": logged,
+            "planned_sets": planned, "logged_sets": logged, "completed_sets": completed,
+            "exercises": exercise_progress,
         })
     due = len(sessions) - counts["not_loggable"]
     return {
